@@ -1,3 +1,5 @@
+"use client";
+
 import * as tf from "@tensorflow/tfjs";
 import { setWasmPaths, getThreadsCount } from "@tensorflow/tfjs-backend-wasm";
 import "@tensorflow/tfjs-backend-webgpu";
@@ -22,17 +24,22 @@ async function load_model() {
   await tf.setBackend(device);
   model = await tf.loadGraphModel(
     "https://regulussig.s3.ap-southeast-1.amazonaws.com/tfjs/model/model.json",
+    {
+      onProgress: (fractions) => {
+        postMessage({ type: "modelLoading", progress: fractions * 100 });
+      },
+    },
   );
   console.log("model loaded", model);
-  let threadsCount = 0;
+  let threads = 0;
   if (device === "wasm") {
     try {
-      threadsCount = getThreadsCount();
+      threads = getThreadsCount();
     } catch (e) {
       console.log("getThreadsCount Error", e);
     }
   }
-  postMessage({ type: "modelLoaded", threadsCount, device });
+  postMessage({ type: "modelLoaded", threads, deviceName: device });
 }
 
 async function run_model(input: ImageData) {

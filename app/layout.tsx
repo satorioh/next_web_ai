@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { fontSans } from "@/lib/fonts";
+import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Next Web AI",
@@ -16,7 +16,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={cn("font-sans antialiased", fontSans.variable)}>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

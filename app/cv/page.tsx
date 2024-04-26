@@ -20,6 +20,7 @@ export default function CVPage() {
   const [intervalId, setIntervalId] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
+  const [isPlaying, setIsPlaying] = useState(false);
   const workerRef = useRef<Worker>();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -58,7 +59,6 @@ export default function CVPage() {
     const { progress } = data;
     console.log("progress", progress);
     setProgress(progress);
-    initWebcam();
   };
 
   const onModelLoaded = (data: { threads: number; deviceName: string }) => {
@@ -66,6 +66,7 @@ export default function CVPage() {
     threadsCount = threads;
     device = deviceName;
     setIsLoading(false);
+    initWebcam();
   };
 
   const onModelResult = (data: { startTime: number; result: Float32Array }) => {
@@ -133,6 +134,15 @@ export default function CVPage() {
     console.log("pause");
     window.clearInterval(intervalId);
     videoRef.current?.pause();
+  };
+
+  const handleClick = async () => {
+    if (isPlaying) {
+      await pause();
+    } else {
+      await start();
+    }
+    setIsPlaying(!isPlaying);
   };
 
   const prepare_input = (img: HTMLCanvasElement) => {
@@ -219,8 +229,8 @@ export default function CVPage() {
     });
 
     // 绘制 Infer count 和 Average infer time
-    ctx.font = "26px Arial";
-    ctx.fillStyle = "#e11d1d";
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "black";
     ctx.fillText(`Infer count: ${inferCount}`, 10, 20);
     ctx.fillText(
       `Average infer time: ${
@@ -253,9 +263,11 @@ export default function CVPage() {
       </div>
       <div className="text-center space-x-4 mt-4">
         <When condition={!isLoading}>
-          <Button onClick={start}>Start</Button>
-          <Button variant="secondary" onClick={pause}>
-            Pause
+          <Button
+            onClick={handleClick}
+            variant={isPlaying ? "destructive" : "default"}
+          >
+            {isPlaying ? "Pause" : "Start"}
           </Button>
         </When>
       </div>

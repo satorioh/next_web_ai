@@ -15,9 +15,9 @@ let boxes: Box[] = [];
 let isBusy = false;
 let threadsCount = 0;
 let device = "";
+let requestId = 0;
 
 export default function CVPage() {
-  const [intervalId, setIntervalId] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -50,8 +50,7 @@ export default function CVPage() {
     workerRef.current.addEventListener("message", onMessageReceived);
 
     return () => {
-      workerRef.current?.terminate();
-      setIsLoading(true);
+      reset();
     };
   }, []);
 
@@ -89,17 +88,26 @@ export default function CVPage() {
   };
 
   const initWebcam = async () => {
+    const errorMessage =
+      "You have to give browser the Webcam permission to run detection";
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       toast({
-        title:
-          "You have to give browser the Webcam permission to run detection",
+        variant: "destructive",
+        title: errorMessage,
       });
       return;
     }
     console.log("initWebcam");
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: errorMessage,
+      });
     }
   };
 
@@ -108,7 +116,7 @@ export default function CVPage() {
     canvasRef.current.width = 640;
     canvasRef.current.height = 480;
     const context = canvasRef.current.getContext("2d");
-    const intervalId = window.setInterval(() => {
+    const process = () => {
       console.log("interval");
       if (context && videoRef.current && canvasRef.current) {
         context.drawImage(videoRef.current, 0, 0);
@@ -120,8 +128,9 @@ export default function CVPage() {
           isBusy = true;
         }
       }
-    }, 30);
-    setIntervalId(intervalId);
+      requestId = window.requestAnimationFrame(process);
+    };
+    process();
   };
 
   const start = async () => {
@@ -132,8 +141,21 @@ export default function CVPage() {
 
   const pause = async () => {
     console.log("pause");
-    window.clearInterval(intervalId);
+    window.cancelAnimationFrame(requestId);
     videoRef.current?.pause();
+  };
+
+  const reset = async () => {
+    console.log("reset");
+    workerRef.current?.terminate();
+    setIsLoading(true);
+    inferCount = 0;
+    totalInferTime = 0;
+    boxes = [];
+    isBusy = false;
+    threadsCount = 0;
+    device = "";
+    requestId = 0;
   };
 
   const handleClick = async () => {

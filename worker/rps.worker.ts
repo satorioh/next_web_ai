@@ -8,9 +8,11 @@ let device = "wasm";
 let model: null | tf.GraphModel = null;
 
 async function init() {
+  console.log("init");
   if (navigator.gpu && (await navigator.gpu.requestAdapter())) {
     device = "webgpu";
   } else {
+    console.log("setWasmPaths");
     setWasmPaths(
       "https://regulussig.s3.ap-southeast-1.amazonaws.com/tfjs/wasm/",
     );
@@ -21,7 +23,12 @@ async function init() {
 init();
 
 async function load_model() {
-  await tf.setBackend(device);
+  console.log("load_model with device: ", device);
+  try {
+    await tf.setBackend(device);
+  } catch (e) {
+    console.log("setBackend Error", e);
+  }
   model = await tf.loadGraphModel(
     "https://regulussig.s3.ap-southeast-1.amazonaws.com/tfjs/model/model.json",
     {

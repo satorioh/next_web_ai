@@ -28,7 +28,7 @@ export default function CVPage() {
 
   useEffect(() => {
     workerRef.current = new Worker(
-      new URL("./rps.worker.ts", import.meta.url),
+      new URL("../../worker/rps.worker.ts", import.meta.url),
     );
 
     const onMessageReceived = (event: MessageEvent) => {

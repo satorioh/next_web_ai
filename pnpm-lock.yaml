@@ -23,6 +23,9 @@ importers:
       '@tensorflow/tfjs-backend-wasm':
         specifier: ^4.18.0
         version: 4.18.0(@tensorflow/tfjs-core@4.18.0)
+      '@tensorflow/tfjs-backend-webgl':
+        specifier: ^4.18.0
+        version: 4.18.0(@tensorflow/tfjs-core@4.18.0)
       '@tensorflow/tfjs-backend-webgpu':
         specifier: ^4.18.0
         version: 4.18.0(@tensorflow/tfjs-core@4.18.0)
@@ -59,6 +62,9 @@ importers:
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.3)
+      terser-webpack-plugin:
+        specifier: ^5.3.10
+        version: 5.3.10(webpack@5.91.0)
     devDependencies:
       '@types/node':
         specifier: ^20

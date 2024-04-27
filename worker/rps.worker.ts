@@ -3,20 +3,23 @@
 import * as tf from "@tensorflow/tfjs";
 import { setWasmPaths, getThreadsCount } from "@tensorflow/tfjs-backend-wasm";
 import "@tensorflow/tfjs-backend-webgpu";
+import "@tensorflow/tfjs-backend-webgl";
 
-let device = "wasm";
+// let device = "wasm";
+let device = "webgl";
 let model: null | tf.GraphModel = null;
 
 async function init() {
   console.log("init");
   if (navigator.gpu && (await navigator.gpu.requestAdapter())) {
     device = "webgpu";
-  } else {
-    console.log("setWasmPaths");
-    setWasmPaths(
-      "https://regulussig.s3.ap-southeast-1.amazonaws.com/tfjs/wasm/",
-    );
   }
+  // } else {
+  //   console.log("setWasmPaths");
+  //   setWasmPaths(
+  //     "https://regulussig.s3.ap-southeast-1.amazonaws.com/tfjs/wasm/",
+  //   );
+  // }
   load_model();
 }
 

@@ -14,6 +14,7 @@
     "@radix-ui/react-toast": "^1.1.5",
     "@tensorflow/tfjs": "^4.18.0",
     "@tensorflow/tfjs-backend-wasm": "^4.18.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.18.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.18.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -25,7 +26,8 @@
     "react-dom": "^18",
     "react-if": "^4.1.5",
     "tailwind-merge": "^2.3.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "terser-webpack-plugin": "^5.3.10"
   },
   "devDependencies": {
     "@types/node": "^20",

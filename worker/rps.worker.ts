@@ -1,12 +1,10 @@
 "use client";
 
 import * as tf from "@tensorflow/tfjs";
-// import { setWasmPaths, getThreadsCount } from "@tensorflow/tfjs-backend-wasm";
 import "@tensorflow/tfjs-backend-webgpu";
 import "@tensorflow/tfjs-backend-webgl";
 import { BACKEND_URL_PREFIX } from "@/lib/constants";
 
-// let device = "wasm";
 let device = "webgl";
 let model: null | tf.GraphModel = null;
 const IDB_URL = "indexeddb://rps-model";
@@ -38,12 +36,6 @@ async function init() {
   if (navigator.gpu && (await navigator.gpu.requestAdapter())) {
     device = "webgpu";
   }
-  // } else {
-  //   console.log("setWasmPaths");
-  //   setWasmPaths(
-  //     "https://regulussig.s3.ap-southeast-1.amazonaws.com/tfjs/wasm/",
-  //   );
-  // }
   load_model();
 }
 
@@ -80,13 +72,6 @@ async function load_model() {
   }
   console.log("model loaded", model);
   let threads = 0;
-  // if (device === "wasm") {
-  //   try {
-  //     threads = getThreadsCount();
-  //   } catch (e) {
-  //     console.log("getThreadsCount Error", e);
-  //   }
-  // }
   postMessage({ type: "modelLoaded", threads, deviceName: device });
 }
 

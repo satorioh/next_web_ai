@@ -16,7 +16,7 @@ async function getModelLastUpdateTime() {
       `${BACKEND_URL_PREFIX}getModelLastUpdateTime?modelName=${modelName}`,
     );
     const { lastUpdateTime } = await res.json();
-    return new Date(lastUpdateTime);
+    return lastUpdateTime ? new Date(lastUpdateTime) : null;
   } catch (e) {
     console.log("getModelLastUpdateTime Error", e);
   }

@@ -18,7 +18,6 @@
     "@tensorflow/tfjs-backend-webgpu": "^4.18.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "file-loader": "^6.2.0",
     "lucide-react": "^0.373.0",
     "next": "14.2.3",
     "prettier": "^3.2.5",
@@ -26,8 +25,7 @@
     "react-dom": "^18",
     "react-if": "^4.1.5",
     "tailwind-merge": "^2.3.0",
-    "tailwindcss-animate": "^1.0.7",
-    "terser-webpack-plugin": "^5.3.10"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@types/node": "^20",

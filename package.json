@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "analyze": "doppler run -- cross-env ANALYZE=true next build",
+    "analyze:server": "doppler run -- cross-env BUNDLE_ANALYZE=server next build",
+    "analyze:browser": "doppler run -- cross-env BUNDLE_ANALYZE=browser next build"
   },
   "dependencies": {
     "@radix-ui/react-progress": "^1.0.3",
@@ -29,9 +32,11 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^14.2.3",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "cross-env": "^7.0.3",
     "eslint": "^8",
     "eslint-config-next": "14.2.3",
     "postcss": "^8",

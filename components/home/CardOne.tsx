@@ -19,7 +19,7 @@ export default function CardOne() {
         <div className="text-center my-10 flex flex-col justify-center items-center">
           <Image
             className="rounded-md"
-            src="/images/rps.gif"
+            src="/images/rps.png"
             alt="rps game"
             width={640}
             height={359}

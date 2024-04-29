@@ -45,6 +45,7 @@ async function load_model() {
   console.log("load_model with device: ", device);
   try {
     await tf.setBackend(device);
+    tf.enableProdMode();
   } catch (e) {
     console.log("setBackend Error", e);
   }

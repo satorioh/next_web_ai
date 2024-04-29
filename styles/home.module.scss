@@ -1,0 +1,33 @@
+.gradient {
+  text-align: right;
+  letter-spacing: -2px;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(
+    90deg,
+    #427dfc,
+    #6861ee 30%,
+    #6d28d9 69%,
+    #5725d3
+  );
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: gradient 10s ease infinite;
+}
+@keyframes gradient {
+  0% {
+    background-position: 0 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+.gradientViolet {
+  background-image: linear-gradient(90deg, #524175, #295270);
+}
+.gradientCyan {
+  background-image: linear-gradient(#05a1a7, #04c5a2);
+}

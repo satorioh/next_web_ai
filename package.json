@@ -24,6 +24,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-if": "^4.1.5",
+    "sass": "^1.75.0",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7"
   },

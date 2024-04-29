@@ -89,20 +89,28 @@ async function downloadModel() {
 }
 
 async function run_model(input: ImageData) {
-  if (!model) {
-    model = await model;
+  if (model) {
+    return tf.tidy(() => {
+      const tf_img = tf.browser.fromPixels(input);
+      const inputs = tf_img.div(255.0).expandDims().toFloat();
+      const outputs = model?.predict(inputs);
+      console.log("numTensors (in predict): " + tf.memory().numTensors);
+      if (outputs instanceof tf.Tensor) {
+        return outputs;
+      }
+    });
   } else {
-    const tf_img = tf.browser.fromPixels(input);
-    const tensor = tf_img.div(255.0).expandDims().toFloat();
-    const outputs = model.predict(tensor);
-    if (outputs instanceof tf.Tensor) {
-      return outputs.data();
-    }
+    console.error("model not loaded");
   }
 }
 
 addEventListener("message", async (event: MessageEvent) => {
   const { input, startTime } = event.data;
-  const output = await run_model(input);
-  postMessage({ type: "modelResult", result: output, startTime });
+  const predict = await run_model(input);
+  if (predict) {
+    const result = await predict.data();
+    postMessage({ type: "modelResult", result, startTime });
+    tf.dispose(predict);
+  }
+  console.log("numTensors (outside predict): " + tf.memory().numTensors);
 });

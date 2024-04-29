@@ -34,7 +34,7 @@ async function isModelLatest(dateSaved: Date) {
 async function init() {
   console.log("init");
   if (navigator.gpu && (await navigator.gpu.requestAdapter())) {
-    device = "webgpu";
+    device = "webgl";
   }
   load_model();
 }
@@ -71,6 +71,7 @@ async function load_model() {
     await downloadModel();
   }
   console.log("model loaded", model);
+  if (model) warmupModel(model);
   let threads = 0;
   postMessage({ type: "modelLoaded", threads, deviceName: device });
 }
@@ -86,6 +87,16 @@ async function downloadModel() {
   );
   const savedResult = await model.save(IDB_URL);
   console.log("model saved to db", savedResult);
+}
+
+function warmupModel(model: tf.GraphModel) {
+  console.log("Warmup model before using real data");
+  const inputShape = model.inputs[0].shape;
+  if (inputShape) {
+    const warmInput = tf.zeros(inputShape);
+    const warmupResult = model.predict(warmInput);
+    tf.dispose([warmupResult, warmInput]);
+  }
 }
 
 async function run_model(input: ImageData) {

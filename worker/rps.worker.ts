@@ -34,7 +34,7 @@ async function isModelLatest(dateSaved: Date) {
 async function init() {
   console.log("init");
   if (navigator.gpu && (await navigator.gpu.requestAdapter())) {
-    device = "webgl";
+    device = "webgpu";
   }
   load_model();
 }

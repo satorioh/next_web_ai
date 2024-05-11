@@ -13,7 +13,7 @@ const modelName = "rps";
 async function getModelLastUpdateTime() {
   try {
     const res = await fetch(
-      `${BACKEND_URL_PREFIX}getModelLastUpdateTime?modelName=${modelName}`,
+      `${BACKEND_URL_PREFIX}model/getModelLastUpdateTime?modelName=${modelName}`,
     );
     const { lastUpdateTime } = await res.json();
     return lastUpdateTime ? new Date(lastUpdateTime) : null;

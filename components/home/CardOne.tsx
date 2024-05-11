@@ -23,6 +23,7 @@ export default function CardOne() {
             alt="rps game"
             width={640}
             height={359}
+            priority
           ></Image>
           <Button
             asChild

@@ -108,7 +108,7 @@ async function run_model(input: ImageData) {
       const outputs = model?.predict(inputs);
       console.log("numTensors (in predict): " + tf.memory().numTensors);
       if (outputs instanceof tf.Tensor) {
-        return outputs;
+        return outputs.squeeze([0]).transpose();
       }
     });
   } else {
@@ -120,7 +120,7 @@ addEventListener("message", async (event: MessageEvent) => {
   const { input, startTime } = event.data;
   const predict = await run_model(input);
   if (predict) {
-    const result = await predict.data();
+    const result = await predict.array();
     postMessage({ type: "modelResult", result, startTime });
     tf.dispose(predict);
   }

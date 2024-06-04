@@ -68,7 +68,7 @@ export default function CVPage() {
     initWebcam();
   };
 
-  const onModelResult = (data: { startTime: number; result: Float32Array }) => {
+  const onModelResult = (data: { startTime: number; result: number[][] }) => {
     const { startTime, result } = data;
     const endTime = performance.now(); // 记录结束时间
     const inferTime = endTime - startTime; // 计算执行时间
@@ -178,30 +178,32 @@ export default function CVPage() {
   };
 
   const process_output = (
-    output: Float32Array,
+    output: number[][],
     img_width: number,
     img_height: number,
   ) => {
+    // row: [xc, yc, w, h, prob1, prob2, prob3]
     let boxes: Box[] = [];
+    const classLength = yolo_classes.length;
     for (let index = 0; index < 8400; index++) {
-      const [class_id, prob] = [
-        ...Array.from(Array(yolo_classes.length).keys()),
-      ]
-        .map((col) => [col, output[8400 * (col + 4) + index]])
-        .reduce((accum, item) => (item[1] > accum[1] ? item : accum), [0, 0]);
-      if (prob < 0.5) {
-        continue;
+      const row = output[index];
+      let max_prob = 0;
+      let class_id = 0;
+      for (let i = 4; i < 4 + classLength; i++) {
+        if (row[i] > max_prob) {
+          max_prob = row[i];
+          class_id = i - 4;
+        }
       }
+      if (max_prob < 0.5) continue;
+
       const label = yolo_classes[class_id];
-      const xc = output[index];
-      const yc = output[8400 + index];
-      const w = output[2 * 8400 + index];
-      const h = output[3 * 8400 + index];
+      const [xc, yc, w, h, ...res] = row;
       const x1 = ((xc - w / 2) / 640) * img_width;
       const y1 = ((yc - h / 2) / 640) * img_height;
       const x2 = ((xc + w / 2) / 640) * img_width;
       const y2 = ((yc + h / 2) / 640) * img_height;
-      boxes.push([x1, y1, x2, y2, label, prob]);
+      boxes.push([x1, y1, x2, y2, label, max_prob]);
     }
 
     boxes = boxes.sort((box1, box2) => box2[5] - box1[5]);

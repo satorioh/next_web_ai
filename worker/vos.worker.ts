@@ -7,8 +7,8 @@ import { BACKEND_URL_PREFIX } from "@/lib/constants";
 
 let device = "webgl";
 let model: null | tf.GraphModel = null;
-const IDB_URL = "indexeddb://rps-model";
-const modelName = "rps";
+const IDB_URL = "indexeddb://vos-model";
+const modelName = "vos";
 
 async function getModelLastUpdateTime() {
   try {
@@ -107,8 +107,8 @@ async function run_model(input: ImageData) {
       const inputs = tf_img.div(255.0).expandDims().toFloat();
       const outputs = model?.predict(inputs);
       console.log("numTensors (in predict): " + tf.memory().numTensors);
-      if (outputs instanceof tf.Tensor) {
-        return outputs.squeeze([0]).transpose();
+      if (Array.isArray(outputs)) {
+        return outputs;
       }
     });
   } else {
@@ -120,10 +120,35 @@ addEventListener("message", async (event: MessageEvent) => {
   const { input, startTime } = event.data;
   const predict = await run_model(input);
   if (predict) {
-    const result = await predict.array();
+    const output = convertPredict(predict);
+    const result = await output.data();
+    console.log("result", result)
     postMessage({ type: "modelResult", result, startTime });
-    tf.dispose(predict);
+    tf.dispose([predict, output]);
   }
-  tf.disposeVariables()
+  tf.disposeVariables();
   console.log("numTensors (outside predict): " + tf.memory().numTensors);
 });
+
+function convertPredict(predict: tf.Tensor[]) {
+  console.log("convertPredict start....");
+  return tf.tidy(() => {
+    const [output0, output1] = predict;
+    const boxMaskData = output0.squeeze([0]).transpose(); // [8400, 116]
+    const maskData = output1
+      .squeeze([0])
+      .transpose([2, 0, 1])
+      .reshape([32, -1]); // [32, 160, 160] reshape -> [32, 25600]
+    // 所有行，前84列
+    const boxes = boxMaskData.slice([0, 0], [-1, 84]); // (8400, 84)
+    // 所有行，后32列
+    const masksPart = boxMaskData.slice([0, 84], [-1, -1]); // (8400, 32)
+    // 获取最终mask数据
+    const masks = tf.matMul(masksPart, maskData); // (8400, 25600)
+    console.log("convertPredict end....")
+    const boxMasks = tf.concat([boxes, masks], 1); // (8400, 25684)
+    // 取第一行数据
+    // return boxMasks.slice([0, 0], [1, -1]);
+    return boxMasks;
+  });
+}

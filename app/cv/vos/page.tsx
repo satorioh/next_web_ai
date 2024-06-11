@@ -8,7 +8,88 @@ import { When } from "react-if";
 
 type Box = [number, number, number, number, string, number];
 
-const yolo_classes = ["Paper", "Rock", "Scissors"];
+const yolo_classes = [
+  "person",
+  "bicycle",
+  "car",
+  "motorcycle",
+  "airplane",
+  "bus",
+  "train",
+  "truck",
+  "boat",
+  "traffic light",
+  "fire hydrant",
+  "stop sign",
+  "parking meter",
+  "bench",
+  "bird",
+  "cat",
+  "dog",
+  "horse",
+  "sheep",
+  "cow",
+  "elephant",
+  "bear",
+  "zebra",
+  "giraffe",
+  "backpack",
+  "umbrella",
+  "handbag",
+  "tie",
+  "suitcase",
+  "frisbee",
+  "skis",
+  "snowboard",
+  "sports ball",
+  "kite",
+  "baseball bat",
+  "baseball glove",
+  "skateboard",
+  "surfboard",
+  "tennis racket",
+  "bottle",
+  "wine glass",
+  "cup",
+  "fork",
+  "knife",
+  "spoon",
+  "bowl",
+  "banana",
+  "apple",
+  "sandwich",
+  "orange",
+  "broccoli",
+  "carrot",
+  "hot dog",
+  "pizza",
+  "donut",
+  "cake",
+  "chair",
+  "couch",
+  "potted plant",
+  "bed",
+  "dining table",
+  "toilet",
+  "tv",
+  "laptop",
+  "mouse",
+  "remote",
+  "keyboard",
+  "cell phone",
+  "microwave",
+  "oven",
+  "toaster",
+  "sink",
+  "refrigerator",
+  "book",
+  "clock",
+  "vase",
+  "scissors",
+  "teddy bear",
+  "hair drier",
+  "toothbrush",
+];
 let inferCount = 0;
 let totalInferTime = 0;
 let boxes: Box[] = [];
@@ -17,7 +98,7 @@ let threadsCount = 0;
 let device = "";
 let requestId = 0;
 
-export default function CVPage() {
+export default function VOSPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -28,7 +109,7 @@ export default function CVPage() {
 
   useEffect(() => {
     workerRef.current = new Worker(
-      new URL("../../worker/rps.worker.ts", import.meta.url),
+      new URL("../../../worker/vos.worker.ts", import.meta.url),
     );
 
     const onMessageReceived = (event: MessageEvent) => {
@@ -148,6 +229,7 @@ export default function CVPage() {
   const reset = async () => {
     console.log("reset");
     workerRef.current?.terminate();
+    pause();
     setIsLoading(true);
     inferCount = 0;
     totalInferTime = 0;
@@ -270,7 +352,7 @@ export default function CVPage() {
   return (
     <div>
       <h2 className="text-center scroll-m-20 pb-2 text-2xl font-semibold tracking-tight first:mt-0">
-        Paper, Rock, Scissors WebCam Detection
+        Virtual Video Conferencing Background
       </h2>
       <video controls className="hidden" ref={videoRef}></video>
       <div className="flex flex-col justify-center items-center relative">

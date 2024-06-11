@@ -29,7 +29,7 @@ export default function CardOne() {
             asChild
             className="mt-8 rounded-md text-base py-6 px-6 bg-gradient-to-r from-indigo-500 to-violet-700"
           >
-            <Link href="/cv">Try for fun</Link>
+            <Link href="/cv/rps">Try for fun</Link>
           </Button>
         </div>
       </div>

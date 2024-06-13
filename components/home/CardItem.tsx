@@ -7,36 +7,46 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-export default function CardItem() {
+interface CardItemProps {
+  title: string;
+  description: string;
+  image: string;
+  link: string;
+}
+
+export default function CardItem(props: CardItemProps) {
+  const { title, description, image, link } = props;
   return (
     <div className="card-item">
-      <Card>
-        <CardHeader className="p-0 pb-6">
-          <Image
-            className="rounded-t-md"
-            src="/images/od.png"
-            alt="object detection"
-            width={312}
-            height={175}
-            priority
-          ></Image>
-        </CardHeader>
-        <CardContent>
-          <CardTitle className="text-xl font-normal cursor-pointer">
-            Object Detection
-          </CardTitle>
-          <CardDescription className="cursor-pointer">
-            Track and label objects in webcam.{" "}
-          </CardDescription>
-        </CardContent>
-        <CardFooter className="justify-center">
-          <p className="border rounded px-2 text-violet-600 hover:bg-violet-100 cursor-pointer">
-            See demo
-          </p>
-        </CardFooter>
-      </Card>
+      <Link href={link}>
+        <Card>
+          <CardHeader className="p-0 pb-6">
+            <Image
+              className="rounded-t-md"
+              src={image}
+              alt={title}
+              width={312}
+              height={175}
+              priority
+            ></Image>
+          </CardHeader>
+          <CardContent>
+            <CardTitle className="text-xl font-normal cursor-pointer">
+              {title}
+            </CardTitle>
+            <CardDescription className="cursor-pointer">
+              {description}
+            </CardDescription>
+          </CardContent>
+          <CardFooter className="justify-center">
+            <p className="border rounded px-2 text-violet-600 hover:bg-violet-100 cursor-pointer">
+              See demo
+            </p>
+          </CardFooter>
+        </Card>
+      </Link>
     </div>
   );
 }

@@ -10,8 +10,7 @@ export default function Header() {
           <span className={styles.gradient}>Next</span> Web ML
         </h1>
         <p className="p-secondary [&:not(:first-child)]:mt-6 text-center text-sm md:text-xl my-2 md:mx-10">
-          {SITE_TITLE} is a platform designed to showcase native AI applications
-          building with web technology.
+          Explore the AI applications built with web technology.
         </p>
       </div>
     </Section>

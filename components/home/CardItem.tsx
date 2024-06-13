@@ -24,7 +24,7 @@ export default function CardItem(props: CardItemProps) {
         <Card>
           <CardHeader className="p-0 pb-6">
             <Image
-              className="rounded-t-md"
+              className="rounded-t-md w-auto"
               src={image}
               alt={title}
               width={312}
@@ -36,7 +36,7 @@ export default function CardItem(props: CardItemProps) {
             <CardTitle className="text-xl font-normal cursor-pointer">
               {title}
             </CardTitle>
-            <CardDescription className="cursor-pointer">
+            <CardDescription className="cursor-pointer truncate">
               {description}
             </CardDescription>
           </CardContent>

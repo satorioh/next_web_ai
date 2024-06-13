@@ -8,6 +8,12 @@ const card_data = [
     image: "/images/od.png",
     link: "/cv/od",
   },
+  {
+    title: "Image Segmentation",
+    description: " Locate objects and create image masks with labels. ",
+    image: "/images/seg.png",
+    link: "/cv/seg",
+  },
 ];
 
 export default function ShowCase() {

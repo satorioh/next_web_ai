@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { When } from "react-if";
 import { Box, ObjectDetectionResult } from "@/lib/types";
-import Link from "next/link";
+import { BackBtn } from "@/components/common/BackBtn";
 
 let inferCount = 0;
 let totalInferTime = 0;
@@ -15,7 +15,7 @@ let isBusy = false;
 let device = "";
 let requestId = 0;
 
-export default function RPSPage() {
+export default function ODPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -235,9 +235,7 @@ export default function RPSPage() {
   return (
     <div>
       <div className="relative">
-        <Button variant="outline" className="absolute -top-1" asChild>
-          <Link href="/">Back</Link>
-        </Button>
+        <BackBtn />
         <h2 className="text-center scroll-m-20 pb-2 text-2xl font-semibold tracking-tight first:mt-0">
           Object Detection
         </h2>

@@ -3,15 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "doppler run -- next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "doppler run -- next start",
     "lint": "next lint",
     "analyze": "doppler run -- cross-env ANALYZE=true next build",
     "analyze:server": "doppler run -- cross-env BUNDLE_ANALYZE=server next build",
     "analyze:browser": "doppler run -- cross-env BUNDLE_ANALYZE=browser next build"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.14",
     "@radix-ui/react-progress": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-toast": "^1.1.5",

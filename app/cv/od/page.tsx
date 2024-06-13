@@ -5,100 +5,16 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { When } from "react-if";
+import { Box, ObjectDetectionResult } from "@/lib/types";
 
-type Box = [number, number, number, number, string, number];
-
-const yolo_classes = [
-  "person",
-  "bicycle",
-  "car",
-  "motorcycle",
-  "airplane",
-  "bus",
-  "train",
-  "truck",
-  "boat",
-  "traffic light",
-  "fire hydrant",
-  "stop sign",
-  "parking meter",
-  "bench",
-  "bird",
-  "cat",
-  "dog",
-  "horse",
-  "sheep",
-  "cow",
-  "elephant",
-  "bear",
-  "zebra",
-  "giraffe",
-  "backpack",
-  "umbrella",
-  "handbag",
-  "tie",
-  "suitcase",
-  "frisbee",
-  "skis",
-  "snowboard",
-  "sports ball",
-  "kite",
-  "baseball bat",
-  "baseball glove",
-  "skateboard",
-  "surfboard",
-  "tennis racket",
-  "bottle",
-  "wine glass",
-  "cup",
-  "fork",
-  "knife",
-  "spoon",
-  "bowl",
-  "banana",
-  "apple",
-  "sandwich",
-  "orange",
-  "broccoli",
-  "carrot",
-  "hot dog",
-  "pizza",
-  "donut",
-  "cake",
-  "chair",
-  "couch",
-  "potted plant",
-  "bed",
-  "dining table",
-  "toilet",
-  "tv",
-  "laptop",
-  "mouse",
-  "remote",
-  "keyboard",
-  "cell phone",
-  "microwave",
-  "oven",
-  "toaster",
-  "sink",
-  "refrigerator",
-  "book",
-  "clock",
-  "vase",
-  "scissors",
-  "teddy bear",
-  "hair drier",
-  "toothbrush",
-];
 let inferCount = 0;
 let totalInferTime = 0;
 let boxes: Box[] = [];
 let isBusy = false;
-let threadsCount = 0;
 let device = "";
 let requestId = 0;
 
-export default function VOSPage() {
+export default function RPSPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -109,7 +25,7 @@ export default function VOSPage() {
 
   useEffect(() => {
     workerRef.current = new Worker(
-      new URL("../../../worker/vos.worker.ts", import.meta.url),
+      new URL("../../../worker/od.worker.ts", import.meta.url),
     );
 
     const onMessageReceived = (event: MessageEvent) => {
@@ -142,14 +58,16 @@ export default function VOSPage() {
   };
 
   const onModelLoaded = (data: { threads: number; deviceName: string }) => {
-    const { threads, deviceName } = data;
-    threadsCount = threads;
+    const { deviceName } = data;
     device = deviceName;
     setIsLoading(false);
     initWebcam();
   };
 
-  const onModelResult = (data: { startTime: number; result: number[][] }) => {
+  const onModelResult = (data: {
+    startTime: number;
+    result: ObjectDetectionResult[];
+  }) => {
     const { startTime, result } = data;
     const endTime = performance.now(); // 记录结束时间
     const inferTime = endTime - startTime; // 计算执行时间
@@ -205,7 +123,7 @@ export default function VOSPage() {
         const input = prepare_input(canvasRef.current);
         if (!isBusy) {
           const startTime = performance.now(); // 记录开始时间
-          workerRef.current?.postMessage({ input, startTime }); // 将开始时间发送到 worker
+          workerRef.current?.postMessage({ type: "frame", input, startTime }); // 将开始时间发送到 worker
           isBusy = true;
         }
       }
@@ -226,16 +144,20 @@ export default function VOSPage() {
     videoRef.current?.pause();
   };
 
+  const closeWorker = () => {
+    workerRef.current?.postMessage({ type: "close" });
+    workerRef.current?.terminate();
+  };
+
   const reset = async () => {
     console.log("reset");
-    workerRef.current?.terminate();
+    closeWorker();
     pause();
     setIsLoading(true);
     inferCount = 0;
     totalInferTime = 0;
     boxes = [];
     isBusy = false;
-    threadsCount = 0;
     device = "";
     requestId = 0;
   };
@@ -260,63 +182,24 @@ export default function VOSPage() {
   };
 
   const process_output = (
-    output: number[][],
+    output: ObjectDetectionResult[],
     img_width: number,
     img_height: number,
   ) => {
-    // row: [xc, yc, w, h, prob1, prob2, prob3]
     let boxes: Box[] = [];
-    const classLength = yolo_classes.length;
-    for (let index = 0; index < 8400; index++) {
+    const outputLength = output.length;
+    for (let index = 0; index < outputLength; index++) {
       const row = output[index];
-      let max_prob = 0;
-      let class_id = 0;
-      for (let i = 4; i < 4 + classLength; i++) {
-        if (row[i] > max_prob) {
-          max_prob = row[i];
-          class_id = i - 4;
-        }
-      }
-      if (max_prob < 0.5) continue;
-
-      const label = yolo_classes[class_id];
-      const [xc, yc, w, h, ...res] = row;
-      const x1 = ((xc - w / 2) / 640) * img_width;
-      const y1 = ((yc - h / 2) / 640) * img_height;
-      const x2 = ((xc + w / 2) / 640) * img_width;
-      const y2 = ((yc + h / 2) / 640) * img_height;
-      boxes.push([x1, y1, x2, y2, label, max_prob]);
+      const max_prob = row.categories[0].score;
+      const label = row.categories[0].categoryName;
+      const { originX, originY, width, height } = row.boundingBox;
+      const x1 = (originX / 640) * img_width;
+      const y1 = (originY / 640) * img_height;
+      const w = (width / 640) * img_width;
+      const h = (height / 640) * img_height;
+      boxes.push([x1, y1, w, h, label, max_prob]);
     }
-
-    boxes = boxes.sort((box1, box2) => box2[5] - box1[5]);
-    const result = [];
-    while (boxes.length > 0) {
-      result.push(boxes[0]);
-      boxes = boxes.filter((box) => iou(boxes[0], box) < 0.7);
-    }
-    return result;
-  };
-
-  const iou = (box1: Box, box2: Box) => {
-    return intersection(box1, box2) / union(box1, box2);
-  };
-
-  const union = (box1: Box, box2: Box) => {
-    const [box1_x1, box1_y1, box1_x2, box1_y2] = box1;
-    const [box2_x1, box2_y1, box2_x2, box2_y2] = box2;
-    const box1_area = (box1_x2 - box1_x1) * (box1_y2 - box1_y1);
-    const box2_area = (box2_x2 - box2_x1) * (box2_y2 - box2_y1);
-    return box1_area + box2_area - intersection(box1, box2);
-  };
-
-  const intersection = (box1: Box, box2: Box) => {
-    const [box1_x1, box1_y1, box1_x2, box1_y2] = box1;
-    const [box2_x1, box2_y1, box2_x2, box2_y2] = box2;
-    const x1 = Math.max(box1_x1, box2_x1);
-    const y1 = Math.max(box1_y1, box2_y1);
-    const x2 = Math.min(box1_x2, box2_x2);
-    const y2 = Math.min(box1_y2, box2_y2);
-    return (x2 - x1) * (y2 - y1);
+    return boxes;
   };
 
   const draw_boxes = (canvas: HTMLCanvasElement, boxes: Box[]) => {
@@ -325,8 +208,8 @@ export default function VOSPage() {
     ctx.strokeStyle = "#00FF00";
     ctx.lineWidth = 3;
     ctx.font = "18px serif";
-    boxes.forEach(([x1, y1, x2, y2, label]) => {
-      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+    boxes.forEach(([x1, y1, w, h, label]) => {
+      ctx.strokeRect(x1, y1, w, h);
       ctx.fillStyle = "#00ff00";
       const width = ctx.measureText(label).width;
       ctx.fillRect(x1, y1, width + 10, 25);
@@ -345,14 +228,13 @@ export default function VOSPage() {
       10,
       40,
     );
-    ctx.fillText(`Threads count: ${threadsCount}`, 10, 60);
-    ctx.fillText(`Device: ${device}`, 10, 80);
+    ctx.fillText(`Device: ${device}`, 10, 60);
   };
 
   return (
     <div>
       <h2 className="text-center scroll-m-20 pb-2 text-2xl font-semibold tracking-tight first:mt-0">
-        Virtual Video Conferencing Background
+        Object Detection
       </h2>
       <video controls className="hidden" ref={videoRef}></video>
       <div className="flex flex-col justify-center items-center relative">

@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { When } from "react-if";
 import { Box, ObjectDetectionResult } from "@/lib/types";
+import Link from "next/link";
 
 let inferCount = 0;
 let totalInferTime = 0;
@@ -233,9 +234,14 @@ export default function RPSPage() {
 
   return (
     <div>
-      <h2 className="text-center scroll-m-20 pb-2 text-2xl font-semibold tracking-tight first:mt-0">
-        Object Detection
-      </h2>
+      <div className="relative">
+        <Button variant="outline" className="absolute -top-1" asChild>
+          <Link href="/">Back</Link>
+        </Button>
+        <h2 className="text-center scroll-m-20 pb-2 text-2xl font-semibold tracking-tight first:mt-0">
+          Object Detection
+        </h2>
+      </div>
       <video controls className="hidden" ref={videoRef}></video>
       <div className="flex flex-col justify-center items-center relative">
         <When condition={isLoading}>

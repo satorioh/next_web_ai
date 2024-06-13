@@ -13,6 +13,7 @@ const runningMode = "VIDEO";
 
 const initializeObjectDetector = async () => {
   const vision = await FilesetResolver.forVisionTasks(wasmPath);
+  postMessage({ type: "modelLoading", progress: 50 });
   objectDetector = await ObjectDetector.createFromOptions(vision, {
     baseOptions: {
       modelAssetPath: modelPath,

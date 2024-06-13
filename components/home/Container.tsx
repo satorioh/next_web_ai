@@ -1,9 +1,11 @@
-import CardOne from "@/components/home/CardOne";
+import Header from "@/components/home/Header";
+import ShowCase from "@/components/home/ShowCase";
 
 export default function Container() {
   return (
     <div className="home-container flex flex-col flex-1 overflow-hidden">
-      <CardOne />
+      <Header />
+      <ShowCase />
     </div>
   );
 }

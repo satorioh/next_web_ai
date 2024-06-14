@@ -10,9 +10,15 @@ const card_data = [
   },
   {
     title: "Image Segmentation",
-    description: " Locate objects and create image masks with labels. ",
+    description: "Locate objects and create image masks with labels. ",
     image: "/images/seg.png",
     link: "/cv/seg",
+  },
+  {
+    title: "Rock, Paper, Scissors",
+    description: "Play rock, paper, scissors with webcam.",
+    image: "/images/rps.png",
+    link: "/cv/rps",
   },
 ];
 

@@ -10,8 +10,8 @@ import { S3_SIG_BUCKET, MP_VERSION } from "@/lib/constants";
 let device = "webgl";
 const modelName = "seg";
 const modelFileName = "selfie_segmenter.tflite";
-const wasmPath = `${S3_SIG_BUCKET}/wasm/${MP_VERSION}`;
-const modelPath = `${S3_SIG_BUCKET}/model/${modelName}/${modelFileName}`;
+const wasmPath = `${S3_SIG_BUCKET}/tflite/wasm/${MP_VERSION}`;
+const modelPath = `${S3_SIG_BUCKET}/tflite/model/${modelName}/${modelFileName}`;
 let imageSegmenter: ImageSegmenter;
 const runningMode = "VIDEO";
 

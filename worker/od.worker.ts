@@ -6,8 +6,8 @@ import { S3_SIG_BUCKET, MP_VERSION } from "@/lib/constants";
 let device = "webgl";
 const modelName = "od";
 const modelFileName = "efficientdet_lite0.tflite";
-const wasmPath = `${S3_SIG_BUCKET}/wasm/${MP_VERSION}`;
-const modelPath = `${S3_SIG_BUCKET}/model/${modelName}/${modelFileName}`;
+const wasmPath = `${S3_SIG_BUCKET}/tflite/wasm/${MP_VERSION}`;
+const modelPath = `${S3_SIG_BUCKET}/tflite/model/${modelName}/${modelFileName}`;
 let objectDetector: ObjectDetector;
 const runningMode = "VIDEO";
 

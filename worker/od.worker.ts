@@ -12,16 +12,22 @@ let objectDetector: ObjectDetector;
 const runningMode = "VIDEO";
 
 const initializeObjectDetector = async () => {
-  const vision = await FilesetResolver.forVisionTasks(wasmPath);
-  postMessage({ type: "modelLoading", progress: 50 });
-  objectDetector = await ObjectDetector.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath: modelPath,
-      delegate: "GPU",
-    },
-    scoreThreshold: 0.5,
-    runningMode: runningMode,
-  });
+  try {
+    const vision = await FilesetResolver.forVisionTasks(wasmPath);
+    postMessage({ type: "modelLoading", progress: 50 });
+    objectDetector = await ObjectDetector.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: modelPath,
+        delegate: "GPU",
+      },
+      scoreThreshold: 0.5,
+      runningMode: runningMode,
+    });
+  } catch (e) {
+    console.error(e);
+    console.log("retrying");
+    await initializeObjectDetector();
+  }
 };
 
 async function init() {

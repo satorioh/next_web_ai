@@ -16,17 +16,23 @@ let imageSegmenter: ImageSegmenter;
 const runningMode = "VIDEO";
 
 const createImageSegmenter = async () => {
-  const vision = await FilesetResolver.forVisionTasks(wasmPath);
-  postMessage({ type: "modelLoading", progress: 50 });
-  imageSegmenter = await ImageSegmenter.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath: modelPath,
-      delegate: "GPU",
-    },
-    runningMode: runningMode,
-    outputCategoryMask: false,
-    outputConfidenceMasks: true,
-  });
+  try {
+    const vision = await FilesetResolver.forVisionTasks(wasmPath);
+    postMessage({ type: "modelLoading", progress: 50 });
+    imageSegmenter = await ImageSegmenter.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: modelPath,
+        delegate: "CPU",
+      },
+      runningMode: runningMode,
+      outputCategoryMask: true,
+      outputConfidenceMasks: false,
+    });
+  } catch (e) {
+    console.error(e);
+    console.log("retrying");
+    await createImageSegmenter();
+  }
 };
 
 async function init() {
@@ -41,16 +47,21 @@ async function load_model() {
   postMessage({ type: "modelLoaded", deviceName: device });
 }
 
-async function run_model(input: ImageData) {
+async function run_model(input: ImageData, startTime: number) {
   let startTimeMs = performance.now();
-  imageSegmenter.segmentForVideo(input, startTimeMs, callbackForVideo);
+  imageSegmenter.segmentForVideo(input, startTimeMs, (result) =>
+    callbackForVideo(result, startTime),
+  );
 }
 
-function callbackForVideo(result: ImageSegmenterResult) {
-  console.log("callback result", result);
-  // const mask = result.categoryMask.getAsFloat32Array();
-  // console.log("mask", mask);
-  // postMessage({ type: "modelResult", result: predict, startTime });
+async function callbackForVideo(
+  result: ImageSegmenterResult,
+  startTime: number,
+) {
+  if (result.categoryMask) {
+    const maskImage = result.categoryMask.getAsUint8Array();
+    postMessage({ type: "modelResult", maskImage, startTime });
+  }
 }
 
 addEventListener("message", async (event: MessageEvent) => {
@@ -67,7 +78,7 @@ addEventListener("message", async (event: MessageEvent) => {
 
 async function handleFrame(data: { input: ImageData; startTime: number }) {
   const { input, startTime } = data;
-  await run_model(input);
+  await run_model(input, startTime);
 }
 
 function handleClose() {

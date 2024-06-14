@@ -3,6 +3,12 @@ import CardItem from "@/components/home/CardItem";
 
 const card_data = [
   {
+    title: "Rock, Paper, Scissors",
+    description: "Play rock, paper, scissors with webcam.",
+    image: "/images/rps.png",
+    link: "/cv/rps",
+  },
+  {
     title: "Object Detection",
     description: "Track and label objects in webcam.",
     image: "/images/od.png",
@@ -13,12 +19,6 @@ const card_data = [
     description: "Locate objects and create image masks with labels. ",
     image: "/images/seg.png",
     link: "/cv/seg",
-  },
-  {
-    title: "Rock, Paper, Scissors",
-    description: "Play rock, paper, scissors with webcam.",
-    image: "/images/rps.png",
-    link: "/cv/rps",
   },
 ];
 

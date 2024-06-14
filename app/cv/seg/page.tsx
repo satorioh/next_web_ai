@@ -5,15 +5,39 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { When } from "react-if";
-import { Box, ObjectDetectionResult } from "@/lib/types";
+import { ImageSegmenterResult } from "@/lib/types";
 import { BackBtn } from "@/components/common/BackBtn";
+
+const legendColors = [
+  [255, 197, 0, 255], // Vivid Yellow
+  [128, 62, 117, 255], // Strong Purple
+  [255, 104, 0, 255], // Vivid Orange
+  [166, 189, 215, 255], // Very Light Blue
+  [193, 0, 32, 255], // Vivid Red
+  [206, 162, 98, 255], // Grayish Yellow
+  [129, 112, 102, 255], // Medium Gray
+  [0, 125, 52, 255], // Vivid Green
+  [246, 118, 142, 255], // Strong Purplish Pink
+  [0, 83, 138, 255], // Strong Blue
+  [255, 112, 92, 255], // Strong Yellowish Pink
+  [83, 55, 112, 255], // Strong Violet
+  [255, 142, 0, 255], // Vivid Orange Yellow
+  [179, 40, 81, 255], // Strong Purplish Red
+  [244, 200, 0, 255], // Vivid Greenish Yellow
+  [127, 24, 13, 255], // Strong Reddish Brown
+  [147, 170, 0, 255], // Vivid Yellowish Green
+  [89, 51, 21, 255], // Deep Yellowish Brown
+  [241, 58, 19, 255], // Vivid Reddish Orange
+  [35, 44, 22, 255], // Dark Olive Green
+  [0, 161, 194, 255], // Vivid Blue
+];
 
 let inferCount = 0;
 let totalInferTime = 0;
-let boxes: Box[] = [];
 let isBusy = false;
 let device = "";
 let requestId = 0;
+let result: Uint8Array | undefined;
 
 export default function SegPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +50,7 @@ export default function SegPage() {
 
   useEffect(() => {
     workerRef.current = new Worker(
-        new URL("../../../worker/seg.worker.ts", import.meta.url),
+      new URL("../../../worker/seg.worker.ts", import.meta.url),
     );
 
     const onMessageReceived = (event: MessageEvent) => {
@@ -65,11 +89,8 @@ export default function SegPage() {
     initWebcam();
   };
 
-  const onModelResult = (data: {
-    startTime: number;
-    result: ObjectDetectionResult[];
-  }) => {
-    const { startTime, result } = data;
+  const onModelResult = (data: ImageSegmenterResult) => {
+    const { startTime, maskImage } = data;
     const endTime = performance.now(); // 记录结束时间
     const inferTime = endTime - startTime; // 计算执行时间
     inferCount++;
@@ -79,17 +100,13 @@ export default function SegPage() {
     console.log(`Average infer time: ${averageInferTime} ms`);
 
     if (canvasRef.current === null) return;
-    boxes = process_output(
-        result,
-        canvasRef.current.width,
-        canvasRef.current.height,
-    );
+    process_output(maskImage);
     isBusy = false;
   };
 
   const initWebcam = async () => {
     const errorMessage =
-        "You have to give browser the Webcam permission to run detection";
+      "You have to give browser the Webcam permission to run detection";
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       toast({
         variant: "destructive",
@@ -120,7 +137,7 @@ export default function SegPage() {
       console.log("interval");
       if (context && videoRef.current && canvasRef.current) {
         context.drawImage(videoRef.current, 0, 0);
-        draw_boxes(canvasRef.current, boxes);
+        draw_boxes(canvasRef.current);
         const input = prepare_input(canvasRef.current);
         if (!isBusy) {
           const startTime = performance.now(); // 记录开始时间
@@ -157,8 +174,8 @@ export default function SegPage() {
     setIsLoading(true);
     inferCount = 0;
     totalInferTime = 0;
-    boxes = [];
     isBusy = false;
+    result = undefined;
     device = "";
     requestId = 0;
   };
@@ -182,87 +199,80 @@ export default function SegPage() {
     return context.getImageData(0, 0, 640, 640);
   };
 
-  const process_output = (
-      output: ObjectDetectionResult[],
-      img_width: number,
-      img_height: number,
-  ) => {
-    let boxes: Box[] = [];
-    const outputLength = output.length;
-    for (let index = 0; index < outputLength; index++) {
-      const row = output[index];
-      const max_prob = row.categories[0].score;
-      const label = row.categories[0].categoryName;
-      const { originX, originY, width, height } = row.boundingBox;
-      const x1 = (originX / 640) * img_width;
-      const y1 = (originY / 640) * img_height;
-      const w = (width / 640) * img_width;
-      const h = (height / 640) * img_height;
-      boxes.push([x1, y1, w, h, label, max_prob]);
-    }
-    return boxes;
+  const process_output = (maskImage: Uint8Array) => {
+    result = maskImage;
   };
 
-  const draw_boxes = (canvas: HTMLCanvasElement, boxes: Box[]) => {
+  const draw_boxes = (canvas: HTMLCanvasElement) => {
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx || !result || !videoRef.current) return;
     ctx.strokeStyle = "#00FF00";
     ctx.lineWidth = 3;
     ctx.font = "18px serif";
-    boxes.forEach(([x1, y1, w, h, label]) => {
-      ctx.strokeRect(x1, y1, w, h);
-      ctx.fillStyle = "#00ff00";
-      const width = ctx.measureText(label).width;
-      ctx.fillRect(x1, y1, width + 10, 25);
-      ctx.fillStyle = "#000000";
-      ctx.fillText(label, x1, y1 + 18);
-    });
+
+    const { videoWidth, videoHeight } = videoRef.current;
+
+    let imageData = ctx.getImageData(0, 0, videoWidth, videoHeight).data;
+
+    let j = 0;
+    for (let i = 0; i < result.length; ++i) {
+      const maskVal = Math.round(result[i] * 255.0);
+      const legendColor = legendColors[maskVal % legendColors.length];
+      imageData[j] = (legendColor[0] + imageData[j]) / 2;
+      imageData[j + 1] = (legendColor[1] + imageData[j + 1]) / 2;
+      imageData[j + 2] = (legendColor[2] + imageData[j + 2]) / 2;
+      imageData[j + 3] = (legendColor[3] + imageData[j + 3]) / 2;
+      j += 4;
+    }
+    const uint8Array = new Uint8ClampedArray(imageData.buffer);
+    const dataNew = new ImageData(uint8Array, videoWidth, videoHeight);
+    ctx.putImageData(dataNew, 0, 0);
 
     // 绘制 Infer count 和 Average infer time
     ctx.font = "16px Arial";
     ctx.fillStyle = "black";
     ctx.fillText(`Infer count: ${inferCount}`, 10, 20);
     ctx.fillText(
-        `Average infer time: ${
-            inferCount ? parseInt(String(totalInferTime / inferCount)) : 0
-        } ms`,
-        10,
-        40,
+      `Average infer time: ${
+        inferCount ? parseInt(String(totalInferTime / inferCount)) : 0
+      } ms`,
+      10,
+      40,
     );
     ctx.fillText(`Device: ${device}`, 10, 60);
   };
 
   return (
-      <div>
-        <div className="relative">
-          <BackBtn />
-          <h2 className="text-center scroll-m-20 pb-2 text-2xl font-semibold tracking-tight first:mt-0">
-            Image Segmentation
-          </h2>
-        </div>
-        <video controls className="hidden" ref={videoRef}></video>
-        <div className="flex flex-col justify-center items-center relative">
-          <When condition={isLoading}>
-            <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
-              <Progress value={progress} />
-              <div>Loading model, please wait...</div>
-            </div>
-          </When>
-          <canvas
-              className="w-full text-center max-w-3xl"
-              ref={canvasRef}
-          ></canvas>
-        </div>
-        <div className="text-center space-x-4 mt-4">
-          <When condition={!isLoading}>
-            <Button
-                onClick={handleClick}
-                variant={isPlaying ? "destructive" : "default"}
-            >
-              {isPlaying ? "Pause" : "Start"}
-            </Button>
-          </When>
-        </div>
+    <div>
+      <div className="relative">
+        <BackBtn />
+        <h2 className="text-center scroll-m-20 pb-2 text-2xl font-semibold tracking-tight first:mt-0">
+          Image Segmentation
+        </h2>
       </div>
+      <video controls className="hidden" ref={videoRef}></video>
+      <div className="flex flex-col justify-center items-center relative">
+        <When condition={isLoading}>
+          <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
+            <Progress value={progress} />
+            <div>Loading model, please wait...</div>
+          </div>
+        </When>
+        <canvas
+          className="w-full text-center max-w-3xl"
+          ref={canvasRef}
+        ></canvas>
+      </div>
+      <div className="text-center space-x-4 mt-4">
+        <When condition={!isLoading}>
+          <Button
+            onClick={handleClick}
+            variant={isPlaying ? "destructive" : "default"}
+          >
+            {isPlaying ? "Pause" : "Start"}
+          </Button>
+        </When>
+      </div>
+    </div>
   );
 }

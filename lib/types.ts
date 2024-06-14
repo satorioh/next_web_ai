@@ -19,3 +19,9 @@ export interface ObjectDetectionResult {
   categories: CategoryItem[];
   boundingBox: BoundingBox;
 }
+
+export interface ImageSegmenterResult {
+  type: string;
+  maskImage: Uint8Array;
+  startTime: number;
+}

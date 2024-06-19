@@ -1,36 +1,31 @@
 "use client";
 
-import {
-  ImageSegmenter,
-  FilesetResolver,
-  ImageSegmenterResult,
-} from "@mediapipe/tasks-vision";
+import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { S3_SIG_BUCKET, WASM_PATH } from "@/lib/constants";
 
 let device = "webgl";
-const modelName = "seg";
-const modelFileName = "selfie_segmenter.tflite";
+const modelName = "hand";
+const modelFileName = "hand_landmarker.task";
 const modelPath = `${S3_SIG_BUCKET}/tflite/model/${modelName}/${modelFileName}`;
-let imageSegmenter: ImageSegmenter;
+let handLandmarker: HandLandmarker;
 const runningMode = "VIDEO";
 
-const createImageSegmenter = async () => {
+const initializeHandLandmarker = async () => {
   try {
     const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
     postMessage({ type: "modelLoading", progress: 50 });
-    imageSegmenter = await ImageSegmenter.createFromOptions(vision, {
+    handLandmarker = await HandLandmarker.createFromOptions(vision, {
       baseOptions: {
         modelAssetPath: modelPath,
-        delegate: "CPU",
+        delegate: "GPU",
       },
+      numHands: 2,
       runningMode: runningMode,
-      outputCategoryMask: true,
-      outputConfidenceMasks: false,
     });
   } catch (e) {
     console.error(e);
     console.log("retrying");
-    await createImageSegmenter();
+    await initializeHandLandmarker();
   }
 };
 
@@ -42,25 +37,14 @@ async function init() {
 init();
 
 async function load_model() {
-  await createImageSegmenter();
+  await initializeHandLandmarker();
   postMessage({ type: "modelLoaded", deviceName: device });
 }
 
-async function run_model(input: ImageData, startTime: number) {
+async function run_model(input: ImageData) {
   let startTimeMs = performance.now();
-  imageSegmenter.segmentForVideo(input, startTimeMs, (result) =>
-    callbackForVideo(result, startTime),
-  );
-}
-
-async function callbackForVideo(
-  result: ImageSegmenterResult,
-  startTime: number,
-) {
-  if (result.categoryMask) {
-    const maskImage = result.categoryMask.getAsUint8Array();
-    postMessage({ type: "modelResult", maskImage, startTime });
-  }
+  const result = handLandmarker.detectForVideo(input, startTimeMs);
+  return result.landmarks;
 }
 
 addEventListener("message", async (event: MessageEvent) => {
@@ -77,7 +61,10 @@ addEventListener("message", async (event: MessageEvent) => {
 
 async function handleFrame(data: { input: ImageData; startTime: number }) {
   const { input, startTime } = data;
-  await run_model(input, startTime);
+  const predict = await run_model(input);
+  if (predict) {
+    postMessage({ type: "modelResult", landmarks: predict, startTime });
+  }
 }
 
 function handleClose() {
@@ -85,6 +72,6 @@ function handleClose() {
 }
 
 function close() {
-  imageSegmenter.close();
-  console.log("imageSegmenter closed");
+  handLandmarker.close();
+  console.log("handLandmarker closed");
 }

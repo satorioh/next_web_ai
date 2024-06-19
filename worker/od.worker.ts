@@ -1,19 +1,18 @@
 "use client";
 
 import { ObjectDetector, FilesetResolver } from "@mediapipe/tasks-vision";
-import { S3_SIG_BUCKET, MP_VERSION } from "@/lib/constants";
+import { S3_SIG_BUCKET, WASM_PATH } from "@/lib/constants";
 
 let device = "webgl";
 const modelName = "od";
 const modelFileName = "efficientdet_lite0.tflite";
-const wasmPath = `${S3_SIG_BUCKET}/tflite/wasm/${MP_VERSION}`;
 const modelPath = `${S3_SIG_BUCKET}/tflite/model/${modelName}/${modelFileName}`;
 let objectDetector: ObjectDetector;
 const runningMode = "VIDEO";
 
 const initializeObjectDetector = async () => {
   try {
-    const vision = await FilesetResolver.forVisionTasks(wasmPath);
+    const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
     postMessage({ type: "modelLoading", progress: 50 });
     objectDetector = await ObjectDetector.createFromOptions(vision, {
       baseOptions: {

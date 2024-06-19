@@ -1,3 +1,5 @@
+import { NormalizedLandmark } from "@mediapipe/tasks-vision";
+
 export type Box = [number, number, number, number, string, number];
 
 interface CategoryItem {
@@ -23,5 +25,13 @@ export interface ObjectDetectionResult {
 export interface ImageSegmenterResult {
   type: string;
   maskImage: Uint8Array;
+  startTime: number;
+}
+
+export type LandMark = NormalizedLandmark
+
+export interface LandMarkerResult {
+  type: string;
+  landmarks: LandMark[][];
   startTime: number;
 }

@@ -20,6 +20,12 @@ const card_data = [
     image: "/images/seg.png",
     link: "/cv/seg",
   },
+  {
+    title: "Hand Landmark Detection",
+    description: "Detect hand landmarks. ",
+    image: "/images/hand.png",
+    link: "/cv/hand",
+  },
 ];
 
 export default function ShowCase() {

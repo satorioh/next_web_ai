@@ -13,6 +13,8 @@ let handLandmarker: HandLandmarker;
 const runningMode = "VIDEO";
 let shieldModule: ShieldModule | null = null;
 let offscreenCtx: OffscreenCanvasRenderingContext2D | null = null;
+let inferCount = 0;
+let totalInferTime = 0;
 
 const initializeHandLandmarker = async () => {
   try {
@@ -43,7 +45,7 @@ init();
 
 async function load_model() {
   await initializeHandLandmarker();
-  postMessage({ type: "modelLoaded", deviceName: device });
+  postMessage({ type: "modelLoaded" });
 }
 
 async function run_model(input: ImageData) {
@@ -53,22 +55,18 @@ async function run_model(input: ImageData) {
 }
 
 addEventListener("message", async (event: MessageEvent) => {
-  try {
-    if (!event.data) return;
-    const { type } = event.data;
-    switch (type) {
-      case "frame":
-        await handleFrame(event.data);
-        break;
-      case "canvas":
-        initOffscreenCanvas(event.data);
-        break;
-      case "close":
-        handleClose();
-        break;
-    }
-  } catch (e) {
-    console.error(e);
+  if (!event.data) return;
+  const { type } = event.data;
+  switch (type) {
+    case "frame":
+      await handleFrame(event.data);
+      break;
+    case "canvas":
+      initOffscreenCanvas(event.data);
+      break;
+    case "close":
+      handleClose();
+      break;
   }
 });
 
@@ -78,15 +76,43 @@ function initOffscreenCanvas(data: { type: string; canvas: OffscreenCanvas }) {
 }
 
 async function handleFrame(data: FrameData) {
-  const { image, startTime } = data;
+  const { image } = data;
+  const startTime = performance.now(); // 记录开始时间
   const predict = await run_model(image);
+  calcTime(startTime);
   console.log("predict", predict);
   if (predict && shieldModule && offscreenCtx) {
     const result = shieldModule.process(image);
     offscreenCtx.clearRect(0, 0, result.width, result.height);
     offscreenCtx.putImageData(result, 0, 0);
+    drawParams(offscreenCtx);
     postMessage({ type: "modelResult" });
   }
+}
+
+function calcTime(startTime: number) {
+  const endTime = performance.now(); // 记录结束时间
+  const inferTime = endTime - startTime; // 计算执行时间
+  inferCount++;
+  totalInferTime += inferTime;
+}
+
+function drawParams(ctx: OffscreenCanvasRenderingContext2D) {
+  ctx.strokeStyle = "#00FF00";
+  ctx.lineWidth = 3;
+  ctx.font = "18px serif";
+  // 绘制 Infer count 和 Average infer time
+  ctx.font = "16px Arial";
+  ctx.fillStyle = "black";
+  ctx.fillText(`Infer count: ${inferCount}`, 10, 20);
+  ctx.fillText(
+    `Average infer time: ${
+      inferCount ? parseInt(String(totalInferTime / inferCount)) : 0
+    } ms`,
+    10,
+    40,
+  );
+  ctx.fillText(`Device: ${device}`, 10, 60);
 }
 
 function handleClose() {
@@ -96,6 +122,8 @@ function handleClose() {
 function close() {
   shieldModule = null;
   offscreenCtx = null;
+  inferCount = 0;
+  totalInferTime = 0;
   handLandmarker.close();
   console.log("handLandmarker closed");
 }

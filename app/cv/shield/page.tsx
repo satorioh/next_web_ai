@@ -5,17 +5,12 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { When } from "react-if";
-import { LandMarkerResult, LandMark, FrameData } from "@/lib/types";
+import { FrameData } from "@/lib/types";
 import { BackBtn } from "@/components/common/BackBtn";
 
-let inferCount = 0;
-let totalInferTime = 0;
 let isBusy = false;
-let device = "";
 let requestId = 0;
-let result: LandMark[][] | undefined;
-// let context: CanvasRenderingContext2D | null;
-let offscreen: OffscreenCanvas;
+let offscreen: OffscreenCanvas | null;
 
 export default function ShieldPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -38,7 +33,7 @@ export default function ShieldPage() {
           onModelLoading(data);
           break;
         case "modelLoaded":
-          onModelLoaded(data);
+          onModelLoaded();
           break;
         case "modelResult":
           onModelResult(data);
@@ -60,26 +55,12 @@ export default function ShieldPage() {
     setProgress(progress);
   };
 
-  const onModelLoaded = (data: { threads: number; deviceName: string }) => {
-    const { deviceName } = data;
-    device = deviceName;
+  const onModelLoaded = () => {
     setIsLoading(false);
     initWebcam();
   };
 
-  const onModelResult = (data: LandMarkerResult) => {
-    // const { startTime, landmarks } = data;
-    // if (landmarks?.length > 0) {
-    //   const endTime = performance.now(); // 记录结束时间
-    //   const inferTime = endTime - startTime; // 计算执行时间
-    //   inferCount++;
-    //   totalInferTime += inferTime;
-    //   const averageInferTime = parseInt(String(totalInferTime / inferCount));
-    //   console.log(`Infer count: ${inferCount}`);
-    //   console.log(`Average infer time: ${averageInferTime} ms`);
-    //
-    //   process_output(landmarks);
-    // }
+  const onModelResult = (data: { type: string }) => {
     isBusy = false;
   };
 
@@ -107,27 +88,31 @@ export default function ShieldPage() {
     }
   };
 
-  const detect = async () => {
-    if (canvasRef.current === null || videoRef.current === null) return;
+  const initOffscreenCanvas = () => {
+    if (canvasRef.current === null) return;
     canvasRef.current.width = 640;
     canvasRef.current.height = 480;
-    // context = canvasRef.current.getContext("2d") as CanvasRenderingContext2D;
     offscreen = canvasRef.current.transferControlToOffscreen();
     workerRef.current?.postMessage({ type: "canvas", canvas: offscreen }, [
       offscreen,
     ]);
+  };
+
+  const detect = async () => {
+    if (videoRef.current === null) return;
+    if (!offscreen) {
+      initOffscreenCanvas();
+    }
 
     const process = () => {
       console.log("interval");
       if (videoRef.current && canvasRef.current) {
         const image = prepare_input(videoRef.current);
         if (!isBusy) {
-          const startTime = performance.now(); // 记录开始时间
           workerRef.current?.postMessage({
             type: "frame",
             image,
-            startTime,
-          } as FrameData); // 将开始时间发送到 worker
+          } as FrameData);
           isBusy = true;
         }
       }
@@ -158,11 +143,8 @@ export default function ShieldPage() {
     closeWorker();
     pause();
     setIsLoading(true);
-    inferCount = 0;
-    totalInferTime = 0;
     isBusy = false;
-    result = undefined;
-    device = "";
+    offscreen = null;
     requestId = 0;
   };
 
@@ -183,10 +165,6 @@ export default function ShieldPage() {
     if (!context) return;
     context.drawImage(img, 0, 0, 640, 480);
     return context.getImageData(0, 0, 640, 480);
-  };
-
-  const process_output = (landmarks: LandMark[][]) => {
-    result = landmarks;
   };
 
   return (

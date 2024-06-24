@@ -50,5 +50,4 @@ export interface HandTip {
 export interface FrameData {
   type: string;
   image: ImageData;
-  startTime: number;
 }

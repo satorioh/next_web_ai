@@ -28,10 +28,27 @@ export interface ImageSegmenterResult {
   startTime: number;
 }
 
-export type LandMark = NormalizedLandmark
+export type LandMark = NormalizedLandmark;
 
 export interface LandMarkerResult {
   type: string;
   landmarks: LandMark[][];
+  startTime: number;
+}
+
+export interface HandTip {
+  thumb_tip: [number, number] | null;
+  midle_tip: [number, number] | null;
+  midle_mcp: [number, number] | null;
+  pinky_tip: [number, number] | null;
+  wrist: [number, number] | null;
+  index_tip: [number, number] | null;
+  ring_tip: [number, number] | null;
+  index_mcp: [number, number] | null;
+}
+
+export interface FrameData {
+  type: string;
+  image: ImageData;
   startTime: number;
 }

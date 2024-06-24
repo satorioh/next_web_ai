@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { When } from "react-if";
-import { LandMarkerResult, LandMark } from "@/lib/types";
+import { LandMarkerResult, LandMark, FrameData } from "@/lib/types";
 import { BackBtn } from "@/components/common/BackBtn";
-import { DrawingUtils, HandLandmarker } from "@mediapipe/tasks-vision";
 
 let inferCount = 0;
 let totalInferTime = 0;
@@ -15,10 +14,10 @@ let isBusy = false;
 let device = "";
 let requestId = 0;
 let result: LandMark[][] | undefined;
-let context: CanvasRenderingContext2D | null;
-let drawUtils: DrawingUtils | null;
+// let context: CanvasRenderingContext2D | null;
+let offscreen: OffscreenCanvas;
 
-export default function HandPage() {
+export default function ShieldPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -29,7 +28,7 @@ export default function HandPage() {
 
   useEffect(() => {
     workerRef.current = new Worker(
-      new URL("../../../worker/hand.worker.ts", import.meta.url),
+      new URL("../../../worker/shield.worker.ts", import.meta.url),
     );
 
     const onMessageReceived = (event: MessageEvent) => {
@@ -69,18 +68,18 @@ export default function HandPage() {
   };
 
   const onModelResult = (data: LandMarkerResult) => {
-    const { startTime, landmarks } = data;
-    if (landmarks?.length > 0) {
-      const endTime = performance.now(); // 记录结束时间
-      const inferTime = endTime - startTime; // 计算执行时间
-      inferCount++;
-      totalInferTime += inferTime;
-      const averageInferTime = parseInt(String(totalInferTime / inferCount));
-      console.log(`Infer count: ${inferCount}`);
-      console.log(`Average infer time: ${averageInferTime} ms`);
-
-      process_output(landmarks);
-    }
+    // const { startTime, landmarks } = data;
+    // if (landmarks?.length > 0) {
+    //   const endTime = performance.now(); // 记录结束时间
+    //   const inferTime = endTime - startTime; // 计算执行时间
+    //   inferCount++;
+    //   totalInferTime += inferTime;
+    //   const averageInferTime = parseInt(String(totalInferTime / inferCount));
+    //   console.log(`Infer count: ${inferCount}`);
+    //   console.log(`Average infer time: ${averageInferTime} ms`);
+    //
+    //   process_output(landmarks);
+    // }
     isBusy = false;
   };
 
@@ -112,24 +111,23 @@ export default function HandPage() {
     if (canvasRef.current === null || videoRef.current === null) return;
     canvasRef.current.width = 640;
     canvasRef.current.height = 480;
-    context = canvasRef.current.getContext("2d") as CanvasRenderingContext2D;
-    drawUtils = new DrawingUtils(context);
+    // context = canvasRef.current.getContext("2d") as CanvasRenderingContext2D;
+    offscreen = canvasRef.current.transferControlToOffscreen();
+    workerRef.current?.postMessage({ type: "canvas", canvas: offscreen }, [
+      offscreen,
+    ]);
 
     const process = () => {
       console.log("interval");
-      if (context && videoRef.current && canvasRef.current) {
-        context.clearRect(
-          0,
-          0,
-          canvasRef.current.width,
-          canvasRef.current.height,
-        );
-        context.drawImage(videoRef.current, 0, 0);
-        draw_boxes();
-        const input = prepare_input(canvasRef.current);
+      if (videoRef.current && canvasRef.current) {
+        const image = prepare_input(videoRef.current);
         if (!isBusy) {
           const startTime = performance.now(); // 记录开始时间
-          workerRef.current?.postMessage({ type: "frame", input, startTime }); // 将开始时间发送到 worker
+          workerRef.current?.postMessage({
+            type: "frame",
+            image,
+            startTime,
+          } as FrameData); // 将开始时间发送到 worker
           isBusy = true;
         }
       }
@@ -166,8 +164,6 @@ export default function HandPage() {
     result = undefined;
     device = "";
     requestId = 0;
-    context = null;
-    drawUtils = null;
   };
 
   const handleClick = async () => {
@@ -179,46 +175,18 @@ export default function HandPage() {
     setIsPlaying(!isPlaying);
   };
 
-  const prepare_input = (img: HTMLCanvasElement) => {
+  const prepare_input = (img: HTMLVideoElement) => {
     const canvas = document.createElement("canvas");
     canvas.width = 640;
-    canvas.height = 640;
+    canvas.height = 480;
     const context = canvas.getContext("2d");
-    if (!context || img.width === 0) return;
-    context.drawImage(img, 0, 0, 640, 640);
-    return context.getImageData(0, 0, 640, 640);
+    if (!context) return;
+    context.drawImage(img, 0, 0, 640, 480);
+    return context.getImageData(0, 0, 640, 480);
   };
 
   const process_output = (landmarks: LandMark[][]) => {
     result = landmarks;
-  };
-
-  const draw_boxes = () => {
-    if (!context || !result || !canvasRef.current || !drawUtils) return;
-    context.strokeStyle = "#00FF00";
-    context.lineWidth = 3;
-    context.font = "18px serif";
-
-    for (const landmarks of result) {
-      drawUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, {
-        color: "#00FF00",
-        lineWidth: 5,
-      });
-      drawUtils.drawLandmarks(landmarks, { color: "#FF0000", lineWidth: 2 });
-    }
-
-    // 绘制 Infer count 和 Average infer time
-    context.font = "16px Arial";
-    context.fillStyle = "black";
-    context.fillText(`Infer count: ${inferCount}`, 10, 20);
-    context.fillText(
-      `Average infer time: ${
-        inferCount ? parseInt(String(totalInferTime / inferCount)) : 0
-      } ms`,
-      10,
-      40,
-    );
-    context.fillText(`Device: ${device}`, 10, 60);
   };
 
   return (
@@ -226,7 +194,7 @@ export default function HandPage() {
       <div className="relative">
         <BackBtn />
         <h2 className="text-center scroll-m-20 pb-2 text-2xl font-semibold tracking-tight first:mt-0">
-          Hand Landmarker
+          Doctor Stranger&apos; Magic Shield
         </h2>
       </div>
       <video controls className="hidden" ref={videoRef}></video>

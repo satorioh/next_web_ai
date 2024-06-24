@@ -10,6 +10,10 @@ const nextConfig = {
   sassOptions: {
     includePaths: [join(__dirname, "styles")],
   },
+  webpack: (config) => {
+    config.resolve.fallback = { fs: false, path: false, crypto: false };
+    return config;
+  },
 };
 
 module.exports = withBundleAnalyzer(nextConfig);

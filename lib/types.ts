@@ -36,15 +36,17 @@ export interface LandMarkerResult {
   startTime: number;
 }
 
+export type LandmarkPoint = [number, number];
+
 export interface HandTip {
-  thumb_tip: [number, number] | null;
-  midle_tip: [number, number] | null;
-  midle_mcp: [number, number] | null;
-  pinky_tip: [number, number] | null;
-  wrist: [number, number] | null;
-  index_tip: [number, number] | null;
-  ring_tip: [number, number] | null;
-  index_mcp: [number, number] | null;
+  thumb_tip: LandmarkPoint | null;
+  midle_tip: LandmarkPoint | null;
+  midle_mcp: LandmarkPoint | null;
+  pinky_tip: LandmarkPoint | null;
+  wrist: LandmarkPoint | null;
+  index_tip: LandmarkPoint | null;
+  ring_tip: LandmarkPoint | null;
+  index_mcp: LandmarkPoint | null;
 }
 
 export interface FrameData {

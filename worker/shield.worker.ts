@@ -82,7 +82,7 @@ async function handleFrame(data: FrameData) {
   calcTime(startTime);
   console.log("predict", predict);
   if (predict && shieldModule && offscreenCtx) {
-    const result = shieldModule.process(image);
+    const result = shieldModule.process(image, predict);
     offscreenCtx.clearRect(0, 0, result.width, result.height);
     offscreenCtx.putImageData(result, 0, 0);
     drawParams(offscreenCtx);

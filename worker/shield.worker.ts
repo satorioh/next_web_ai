@@ -2,7 +2,6 @@
 
 import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { S3_SIG_BUCKET, WASM_PATH } from "@/lib/constants";
-import { ShieldModule } from "@/opencv/shield/main";
 import { FrameData } from "@/lib/types";
 
 let device = "webgl";
@@ -11,7 +10,6 @@ const modelFileName = "hand_landmarker.task";
 const modelPath = `${S3_SIG_BUCKET}/tflite/model/${modelName}/${modelFileName}`;
 let handLandmarker: HandLandmarker;
 const runningMode = "VIDEO";
-let shieldModule: ShieldModule | null = null;
 let offscreenCtx: OffscreenCanvasRenderingContext2D | null = null;
 let inferCount = 0;
 let totalInferTime = 0;
@@ -37,7 +35,6 @@ const initializeHandLandmarker = async () => {
 
 async function init() {
   console.log("init");
-  shieldModule = new ShieldModule();
   load_model();
 }
 
@@ -81,10 +78,9 @@ async function handleFrame(data: FrameData) {
   const predict = await run_model(image);
   calcTime(startTime);
   console.log("predict", predict);
-  if (predict && shieldModule && offscreenCtx) {
-    const result = shieldModule.process(image, predict);
-    offscreenCtx.clearRect(0, 0, result.width, result.height);
-    offscreenCtx.putImageData(result, 0, 0);
+  if (predict && offscreenCtx) {
+    // offscreenCtx.clearRect(0, 0, result.width, result.height);
+    // offscreenCtx.putImageData(result, 0, 0);
     drawParams(offscreenCtx);
     postMessage({ type: "modelResult" });
   }
@@ -120,7 +116,6 @@ function handleClose() {
 }
 
 function close() {
-  shieldModule = null;
   offscreenCtx = null;
   inferCount = 0;
   totalInferTime = 0;

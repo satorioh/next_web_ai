@@ -16,7 +16,6 @@
     "@radix-ui/react-progress": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-toast": "^1.1.5",
-    "@techstark/opencv-js": "4.9.0-release.3",
     "@tensorflow/tfjs": "^4.18.0",
     "@tensorflow/tfjs-backend-wasm": "^4.18.0",
     "@tensorflow/tfjs-backend-webgl": "^4.18.0",

@@ -27,11 +27,17 @@ const card_data = [
     link: "/cv/hand",
   },
   {
-    title: "Doctor Stranger's Magic Shield",
-    description: "Show magic shield like in the movie",
-    image: "/images/shield.png",
-    link: "/cv/shield",
+    title: "Edge Detection",
+    description: "Detect edges via WebRTC.",
+    image: "/images/edge.jpeg",
+    link: "/cv/edge",
   },
+  // {
+  //   title: "Doctor Stranger's Magic Shield",
+  //   description: "Show magic shield like in the movie",
+  //   image: "/images/shield.png",
+  //   link: "/cv/shield",
+  // },
 ];
 
 export default function ShowCase() {

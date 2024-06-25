@@ -7,12 +7,14 @@ import { Progress } from "@/components/ui/progress";
 import { When } from "react-if";
 import { FrameData } from "@/lib/types";
 import { BackBtn } from "@/components/common/BackBtn";
+import { STUN_SERVER, BACKEND_URL_PREFIX } from "@/lib/constants";
 
 let isBusy = false;
 let requestId = 0;
 let offscreen: OffscreenCanvas | null;
+let pc: RTCPeerConnection | null = null;
 
-export default function ShieldPage() {
+export default function EdgePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -57,6 +59,9 @@ export default function ShieldPage() {
 
   const onModelLoaded = () => {
     setIsLoading(false);
+    if (!pc) {
+      createPeerConnection();
+    }
     initWebcam();
   };
 
@@ -77,9 +82,10 @@ export default function ShieldPage() {
     console.log("initWebcam");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      stream.getTracks().forEach((track) => {
+        if (pc) pc.addTrack(track, stream);
+      });
+      negotiate();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -96,6 +102,99 @@ export default function ShieldPage() {
     workerRef.current?.postMessage({ type: "canvas", canvas: offscreen }, [
       offscreen,
     ]);
+  };
+
+  const createPeerConnection = () => {
+    const config = {
+      sdpSemantics: "unified-plan",
+      iceServers: [{ urls: [STUN_SERVER] as string[] }],
+    };
+
+    pc = new RTCPeerConnection(config);
+
+    // register some listeners to help debugging
+    pc.addEventListener(
+      "icegatheringstatechange",
+      () => {
+        console.log(
+          "ice gathering state change ->",
+          pc && pc.iceGatheringState,
+        );
+      },
+      false,
+    );
+
+    pc.addEventListener(
+      "iceconnectionstatechange",
+      () => {
+        console.log(
+          "ice connection state change -->",
+          pc && pc.iceConnectionState,
+        );
+      },
+      false,
+    );
+
+    pc.addEventListener(
+      "signalingstatechange",
+      () => {
+        console.log("signaling state change -->", pc && pc.signalingState);
+      },
+      false,
+    );
+
+    // connect audio / video
+    pc.addEventListener("track", (evt) => {
+      console.log("get backend track ->", evt);
+      if (videoRef.current && evt.track.kind === "video")
+        videoRef.current.srcObject = evt.streams[0];
+    });
+  };
+
+  const negotiate = async () => {
+    if (!pc) return;
+    console.log("start negotiate...");
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      // wait for ICE gathering to complete
+      await new Promise<void>((resolve) => {
+        if (pc && pc.iceGatheringState === "complete") {
+          console.log("negotiate: iceGatheringState Complete");
+          resolve();
+        } else {
+          const checkState = () => {
+            console.log("checkState");
+            if (pc && pc.iceGatheringState === "complete") {
+              pc.removeEventListener("icegatheringstatechange", checkState);
+              console.log("negotiate: iceGatheringState Complete");
+              resolve();
+            }
+          };
+          pc && pc.addEventListener("icegatheringstatechange", checkState);
+        }
+      });
+
+      const finalOffer = pc.localDescription;
+      if (finalOffer) {
+        const response = await fetch(`${BACKEND_URL_PREFIX}webrtc/offer`, {
+          body: JSON.stringify({
+            sdp: finalOffer.sdp,
+            type: finalOffer.type,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+        });
+
+        const answer = await response.json();
+        await pc.setRemoteDescription(answer);
+      }
+    } catch (e) {
+      alert(e);
+    }
   };
 
   const detect = async () => {
@@ -146,6 +245,7 @@ export default function ShieldPage() {
     isBusy = false;
     offscreen = null;
     requestId = 0;
+    pc = null;
   };
 
   const handleClick = async () => {

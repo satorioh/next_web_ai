@@ -125,7 +125,7 @@ export default function EdgePage() {
       }, 1000);
     });
     dc.addEventListener("message", (evt) => {
-      console.log("data channel message ->", evt.data);
+      // console.log("data channel message ->", evt.data);
       if (evt.data.substring(0, 4) === "pong") {
         const elapsed_ms =
           performance.now() - parseInt(evt.data.substring(5), 10);
@@ -201,12 +201,19 @@ export default function EdgePage() {
     const { width: canvasWidth, height: canvasHeight } = canvas;
     if (!ctx) return;
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    ctx.strokeStyle = "#00FF00";
-    ctx.lineWidth = 3;
-    ctx.font = "18px serif";
     canvas.width = width;
     canvas.height = height;
     ctx.drawImage(video, 0, 0);
+
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "white";
+    ctx.fillText(
+      `Average RTT: ${
+        pingCount ? (totalElapsedTime / pingCount).toFixed(2) : 0
+      } ms`,
+      10,
+      20,
+    );
   };
 
   const start = async () => {

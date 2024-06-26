@@ -8,8 +8,6 @@ import { When } from "react-if";
 import { BackBtn } from "@/components/common/BackBtn";
 import { STUN_SERVER, BACKEND_URL_PREFIX } from "@/lib/constants";
 
-let isBusy = false;
-let requestId = 0;
 let pc: RTCPeerConnection | null = null;
 
 export default function EdgePage() {
@@ -17,7 +15,6 @@ export default function EdgePage() {
   const [progress, setProgress] = useState(10);
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -154,31 +151,13 @@ export default function EdgePage() {
     }
   };
 
-  const detect = async () => {
-    if (videoRef.current === null) return;
-
-    const process = () => {
-      console.log("interval");
-      if (videoRef.current && canvasRef.current) {
-        const image = prepare_input(videoRef.current);
-        if (!isBusy) {
-          isBusy = true;
-        }
-      }
-      requestId = window.requestAnimationFrame(process);
-    };
-    process();
-  };
-
   const start = async () => {
     console.log("start");
     await videoRef.current?.play();
-    await detect();
   };
 
   const pause = async () => {
     console.log("pause");
-    window.cancelAnimationFrame(requestId);
     videoRef.current?.pause();
   };
 
@@ -186,8 +165,6 @@ export default function EdgePage() {
     console.log("reset");
     pause();
     setIsLoading(true);
-    isBusy = false;
-    requestId = 0;
     pc = null;
   };
 
@@ -200,16 +177,6 @@ export default function EdgePage() {
     setIsPlaying(!isPlaying);
   };
 
-  const prepare_input = (img: HTMLVideoElement) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 640;
-    canvas.height = 480;
-    const context = canvas.getContext("2d");
-    if (!context) return;
-    context.drawImage(img, 0, 0, 640, 480);
-    return context.getImageData(0, 0, 640, 480);
-  };
-
   return (
     <div>
       <div className="relative">
@@ -218,18 +185,14 @@ export default function EdgePage() {
           Edge Detection
         </h2>
       </div>
-      <video autoPlay ref={videoRef}></video>
       <div className="flex flex-col justify-center items-center relative">
         <When condition={isLoading}>
           <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
             <Progress value={progress} />
-            <div>Loading model, please wait...</div>
+            <div>Loading, please wait...</div>
           </div>
         </When>
-        <canvas
-          className="w-full text-center max-w-3xl"
-          ref={canvasRef}
-        ></canvas>
+        <video ref={videoRef} className="w-full"></video>
       </div>
       <div className="text-center space-x-4 mt-4">
         <When condition={!isLoading}>

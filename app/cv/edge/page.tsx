@@ -9,12 +9,18 @@ import { BackBtn } from "@/components/common/BackBtn";
 import { STUN_SERVER, BACKEND_URL_PREFIX } from "@/lib/constants";
 
 let pc: RTCPeerConnection | null = null;
+let dc: RTCDataChannel | null = null;
+let dcInterval = 0;
+let requestId = 0;
+let pingCount = 0;
+let totalElapsedTime = 0;
 
 export default function EdgePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -22,6 +28,7 @@ export default function EdgePage() {
       createPeerConnection();
       initWebcam();
     }
+    if (!dc) createDataChannel();
     return () => {
       reset();
     };
@@ -103,6 +110,31 @@ export default function EdgePage() {
     });
   };
 
+  const createDataChannel = () => {
+    if (!pc) return;
+    dc = pc.createDataChannel("edges", { ordered: false, maxRetransmits: 0 });
+    dc.addEventListener("close", () => {
+      clearInterval(dcInterval);
+      console.log("data channel closed");
+    });
+    dc.addEventListener("open", () => {
+      console.log("data channel opened");
+      dcInterval = window.setInterval(() => {
+        const message = "ping " + performance.now();
+        dc && dc.send(message);
+      }, 1000);
+    });
+    dc.addEventListener("message", (evt) => {
+      console.log("data channel message ->", evt.data);
+      if (evt.data.substring(0, 4) === "pong") {
+        const elapsed_ms =
+          performance.now() - parseInt(evt.data.substring(5), 10);
+        pingCount++;
+        totalElapsedTime += elapsed_ms;
+      }
+    });
+  };
+
   const negotiate = async () => {
     if (!pc) return;
     console.log("start negotiate...");
@@ -151,21 +183,34 @@ export default function EdgePage() {
     }
   };
 
+  const detect = async () => {
+    if (videoRef.current === null) return;
+
+    const process = () => {
+      if (videoRef.current && canvasRef.current) {
+        drawFrame(videoRef.current, canvasRef.current);
+      }
+      requestId = window.requestAnimationFrame(process);
+    };
+    process();
+  };
+
+  const drawFrame = (video: HTMLVideoElement, canvas: HTMLCanvasElement) => {
+    const ctx = canvas.getContext("2d");
+    const { width, height } = video;
+    if (!ctx) return;
+    ctx.strokeStyle = "#00FF00";
+    ctx.lineWidth = 3;
+    ctx.font = "18px serif";
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(video, 0, 0);
+  };
+
   const start = async () => {
     console.log("start");
     await videoRef.current?.play();
-  };
-
-  const pause = async () => {
-    console.log("pause");
-    videoRef.current?.pause();
-  };
-
-  const reset = async () => {
-    console.log("reset");
-    pause();
-    setIsLoading(true);
-    pc = null;
+    await detect();
   };
 
   const handleClick = async () => {
@@ -177,6 +222,54 @@ export default function EdgePage() {
     setIsPlaying(!isPlaying);
   };
 
+  const pause = async () => {
+    console.log("pause");
+    window.cancelAnimationFrame(requestId);
+    videoRef.current?.pause();
+  };
+
+  function stopRTC() {
+    if (!pc) return;
+
+    // close data channel
+    if (dc) {
+      dc.close();
+      dc = null;
+      console.log("data channel closed");
+    }
+
+    // close transceivers
+    if (pc.getTransceivers) {
+      pc.getTransceivers().forEach((transceiver) => {
+        if (transceiver.stop) {
+          transceiver.stop();
+        }
+      });
+    }
+
+    // close local audio / video
+    pc.getSenders().forEach((sender) => {
+      sender.track?.stop();
+    });
+
+    // close peer connection
+    setTimeout(() => {
+      pc && pc.close();
+      pc = null;
+      console.log("peer connection closed");
+    }, 500);
+  }
+
+  const reset = async () => {
+    console.log("reset");
+    pause();
+    stopRTC();
+    setIsLoading(true);
+    requestId = 0;
+    pingCount = 0;
+    totalElapsedTime = 0;
+  };
+
   return (
     <div>
       <div className="relative">
@@ -185,6 +278,13 @@ export default function EdgePage() {
           Edge Detection
         </h2>
       </div>
+      <video
+        controls
+        width={640}
+        height={480}
+        className="hidden"
+        ref={videoRef}
+      ></video>
       <div className="flex flex-col justify-center items-center relative">
         <When condition={isLoading}>
           <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
@@ -192,7 +292,10 @@ export default function EdgePage() {
             <div>Loading, please wait...</div>
           </div>
         </When>
-        <video ref={videoRef} className="w-full"></video>
+        <canvas
+          className="w-full text-center max-w-3xl"
+          ref={canvasRef}
+        ></canvas>
       </div>
       <div className="text-center space-x-4 mt-4">
         <When condition={!isLoading}>

@@ -198,7 +198,9 @@ export default function EdgePage() {
   const drawFrame = (video: HTMLVideoElement, canvas: HTMLCanvasElement) => {
     const ctx = canvas.getContext("2d");
     const { width, height } = video;
+    const { width: canvasWidth, height: canvasHeight } = canvas;
     if (!ctx) return;
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     ctx.strokeStyle = "#00FF00";
     ctx.lineWidth = 3;
     ctx.font = "18px serif";
@@ -271,7 +273,7 @@ export default function EdgePage() {
   };
 
   return (
-    <div>
+    <div className="h-full">
       <div className="relative">
         <BackBtn />
         <h2 className="text-center scroll-m-20 pb-2 text-2xl font-semibold tracking-tight first:mt-0">
@@ -292,10 +294,7 @@ export default function EdgePage() {
             <div>Loading, please wait...</div>
           </div>
         </When>
-        <canvas
-          className="w-full text-center max-w-3xl"
-          ref={canvasRef}
-        ></canvas>
+        <canvas className="text-center max-w-full" ref={canvasRef}></canvas>
       </div>
       <div className="text-center space-x-4 mt-4">
         <When condition={!isLoading}>

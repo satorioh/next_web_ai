@@ -5,69 +5,30 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { When } from "react-if";
-import { FrameData } from "@/lib/types";
 import { BackBtn } from "@/components/common/BackBtn";
 import { STUN_SERVER, BACKEND_URL_PREFIX } from "@/lib/constants";
 
 let isBusy = false;
 let requestId = 0;
-let offscreen: OffscreenCanvas | null;
 let pc: RTCPeerConnection | null = null;
 
 export default function EdgePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
   const [isPlaying, setIsPlaying] = useState(false);
-  const workerRef = useRef<Worker>();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    workerRef.current = new Worker(
-      new URL("../../../worker/edge.worker.ts", import.meta.url),
-    );
-
-    const onMessageReceived = (event: MessageEvent) => {
-      const data = event.data;
-      switch (data.type) {
-        case "modelLoading":
-          onModelLoading(data);
-          break;
-        case "modelLoaded":
-          onModelLoaded();
-          break;
-        case "modelResult":
-          onModelResult(data);
-          break;
-      }
-    };
-
-    // Attach the callback function as an event listener.
-    workerRef.current.addEventListener("message", onMessageReceived);
-
+    if (!pc) {
+      createPeerConnection();
+      initWebcam();
+    }
     return () => {
       reset();
     };
   }, []);
-
-  const onModelLoading = (data: { progress: number }) => {
-    const { progress } = data;
-    console.log("progress", progress);
-    setProgress(progress);
-  };
-
-  const onModelLoaded = () => {
-    setIsLoading(false);
-    if (!pc) {
-      createPeerConnection();
-    }
-    initWebcam();
-  };
-
-  const onModelResult = (data: { type: string }) => {
-    isBusy = false;
-  };
 
   const initWebcam = async () => {
     const errorMessage =
@@ -83,7 +44,10 @@ export default function EdgePage() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       stream.getTracks().forEach((track) => {
-        if (pc) pc.addTrack(track, stream);
+        if (pc) {
+          console.log("add track");
+          pc.addTrack(track, stream);
+        }
       });
       negotiate();
     } catch (error) {
@@ -94,17 +58,8 @@ export default function EdgePage() {
     }
   };
 
-  const initOffscreenCanvas = () => {
-    if (canvasRef.current === null) return;
-    canvasRef.current.width = 640;
-    canvasRef.current.height = 480;
-    offscreen = canvasRef.current.transferControlToOffscreen();
-    workerRef.current?.postMessage({ type: "canvas", canvas: offscreen }, [
-      offscreen,
-    ]);
-  };
-
   const createPeerConnection = () => {
+    console.log("createPeerConnection");
     const config = {
       sdpSemantics: "unified-plan",
       iceServers: [{ urls: [STUN_SERVER] as string[] }],
@@ -182,6 +137,7 @@ export default function EdgePage() {
           body: JSON.stringify({
             sdp: finalOffer.sdp,
             type: finalOffer.type,
+            video_transform: "edges",
           }),
           headers: {
             "Content-Type": "application/json",
@@ -191,27 +147,21 @@ export default function EdgePage() {
 
         const answer = await response.json();
         await pc.setRemoteDescription(answer);
+        setIsLoading(false);
       }
     } catch (e) {
-      alert(e);
+      console.error(e);
     }
   };
 
   const detect = async () => {
     if (videoRef.current === null) return;
-    if (!offscreen) {
-      initOffscreenCanvas();
-    }
 
     const process = () => {
       console.log("interval");
       if (videoRef.current && canvasRef.current) {
         const image = prepare_input(videoRef.current);
         if (!isBusy) {
-          workerRef.current?.postMessage({
-            type: "frame",
-            image,
-          } as FrameData);
           isBusy = true;
         }
       }
@@ -232,18 +182,11 @@ export default function EdgePage() {
     videoRef.current?.pause();
   };
 
-  const closeWorker = () => {
-    workerRef.current?.postMessage({ type: "close" });
-    workerRef.current?.terminate();
-  };
-
   const reset = async () => {
     console.log("reset");
-    closeWorker();
     pause();
     setIsLoading(true);
     isBusy = false;
-    offscreen = null;
     requestId = 0;
     pc = null;
   };
@@ -275,7 +218,7 @@ export default function EdgePage() {
           Edge Detection
         </h2>
       </div>
-      <video controls className="hidden" ref={videoRef}></video>
+      <video autoPlay ref={videoRef}></video>
       <div className="flex flex-col justify-center items-center relative">
         <When condition={isLoading}>
           <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">

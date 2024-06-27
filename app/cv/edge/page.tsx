@@ -125,7 +125,6 @@ export default function EdgePage() {
       }, 1000);
     });
     dc.addEventListener("message", (evt) => {
-      // console.log("data channel message ->", evt.data);
       if (evt.data.substring(0, 4) === "pong") {
         const elapsed_ms =
           performance.now() - parseInt(evt.data.substring(5), 10);

@@ -298,7 +298,7 @@ export default function EdgePage() {
           </div>
         </When>
         <canvas
-          className="text-center max-w-full"
+          className="text-center max-w-full mx-auto"
           width={640}
           height={480}
           ref={canvasRef}

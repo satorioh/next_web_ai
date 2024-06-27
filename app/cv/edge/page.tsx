@@ -197,12 +197,9 @@ export default function EdgePage() {
 
   const drawFrame = (video: HTMLVideoElement, canvas: HTMLCanvasElement) => {
     const ctx = canvas.getContext("2d");
-    const { width, height } = video;
     const { width: canvasWidth, height: canvasHeight } = canvas;
     if (!ctx) return;
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    canvas.width = width;
-    canvas.height = height;
     ctx.drawImage(video, 0, 0);
 
     ctx.font = "16px Arial";
@@ -301,7 +298,12 @@ export default function EdgePage() {
             <div>Loading, please wait...</div>
           </div>
         </When>
-        <canvas className="text-center max-w-full" ref={canvasRef}></canvas>
+        <canvas
+          className="text-center max-w-full"
+          width={640}
+          height={480}
+          ref={canvasRef}
+        ></canvas>
       </div>
       <div className="text-center space-x-4 mt-4">
         <When condition={!isLoading}>

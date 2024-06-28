@@ -44,7 +44,6 @@ export default function ODPage() {
       }
     };
 
-    // Attach the callback function as an event listener.
     workerRef.current.addEventListener("message", onMessageReceived);
 
     return () => {

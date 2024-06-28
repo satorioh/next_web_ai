@@ -231,7 +231,7 @@ export default function EdgePage() {
     const { width: canvasWidth, height: canvasHeight } = canvas;
     if (!ctx) return;
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    ctx.drawImage(video, 0, 0);
+    ctx.drawImage(video, 0, 0, canvasWidth, canvasHeight);
 
     ctx.font = "16px Arial";
     ctx.fillStyle = "white";

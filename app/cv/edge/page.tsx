@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { Progress } from "@/components/ui/progress";
 import { When } from "react-if";
 import { BackBtn } from "@/components/common/BackBtn";
@@ -33,6 +34,10 @@ export default function EdgePage() {
       reset();
     };
   }, []);
+
+  const refreshPage = () => {
+    window.location.reload();
+  };
 
   const initWebcam = async () => {
     const errorMessage =
@@ -90,6 +95,17 @@ export default function EdgePage() {
           "ice connection state change -->",
           pc && pc.iceConnectionState,
         );
+        if (pc && ["failed", "disconnected"].includes(pc.iceConnectionState)) {
+          toast({
+            variant: "destructive",
+            title: "Lost connection to the server.",
+            action: (
+              <ToastAction altText="Try again" onClick={refreshPage}>
+                Try again
+              </ToastAction>
+            ),
+          });
+        }
       },
       false,
     );

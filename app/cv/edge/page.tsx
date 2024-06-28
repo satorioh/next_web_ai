@@ -39,6 +39,17 @@ export default function EdgePage() {
     window.location.reload();
   };
 
+  const tryAgainToast = (message: string) =>
+    toast({
+      variant: "destructive",
+      title: message,
+      action: (
+        <ToastAction altText="Try again" onClick={refreshPage}>
+          Try again
+        </ToastAction>
+      ),
+    });
+
   const initWebcam = async () => {
     const errorMessage =
       "You have to give browser the Webcam permission to run detection";
@@ -84,6 +95,9 @@ export default function EdgePage() {
           "ice gathering state change ->",
           pc && pc.iceGatheringState,
         );
+        if (pc && pc.iceGatheringState === "complete") {
+          setProgress(70);
+        }
       },
       false,
     );
@@ -95,16 +109,14 @@ export default function EdgePage() {
           "ice connection state change -->",
           pc && pc.iceConnectionState,
         );
-        if (pc && ["failed", "disconnected"].includes(pc.iceConnectionState)) {
-          toast({
-            variant: "destructive",
-            title: "Lost connection to the server.",
-            action: (
-              <ToastAction altText="Try again" onClick={refreshPage}>
-                Try again
-              </ToastAction>
-            ),
-          });
+        switch (pc && pc.iceConnectionState) {
+          case "connected":
+            setProgress(90);
+            break;
+          case "failed":
+          case "disconnected":
+            tryAgainToast("Lost connection to the server.");
+            break;
         }
       },
       false,
@@ -177,21 +189,25 @@ export default function EdgePage() {
 
       const finalOffer = pc.localDescription;
       if (finalOffer) {
-        const response = await fetch(`${BACKEND_URL_PREFIX}webrtc/offer`, {
-          body: JSON.stringify({
-            sdp: finalOffer.sdp,
-            type: finalOffer.type,
-            video_transform: "edges",
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-        });
+        try {
+          const response = await fetch(`${BACKEND_URL_PREFIX}webrtc/offer`, {
+            body: JSON.stringify({
+              sdp: finalOffer.sdp,
+              type: finalOffer.type,
+              video_transform: "edges",
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+            method: "POST",
+          });
 
-        const answer = await response.json();
-        await pc.setRemoteDescription(answer);
-        setIsLoading(false);
+          const answer = await response.json();
+          await pc.setRemoteDescription(answer);
+          setIsLoading(false);
+        } catch (e) {
+          tryAgainToast("Service unreachable");
+        }
       }
     } catch (e) {
       console.error(e);

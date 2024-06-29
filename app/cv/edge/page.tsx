@@ -15,6 +15,8 @@ let dcInterval = 0;
 let requestId = 0;
 let pingCount = 0;
 let totalElapsedTime = 0;
+let personCount = 0;
+let cpuUsage = 0;
 
 export default function EdgePage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -154,10 +156,13 @@ export default function EdgePage() {
     });
     dc.addEventListener("message", (evt) => {
       if (evt.data.substring(0, 4) === "pong") {
-        const elapsed_ms =
-          performance.now() - parseInt(evt.data.substring(5), 10);
+        const data = evt.data.split(" ");
+        const [_, ping, cpu, person] = data;
+        const elapsed_ms = performance.now() - parseInt(ping, 10);
         pingCount++;
         totalElapsedTime += elapsed_ms;
+        cpuUsage = parseFloat(cpu);
+        personCount = parseInt(person, 10);
       }
     });
   };
@@ -242,6 +247,8 @@ export default function EdgePage() {
       10,
       20,
     );
+    ctx.fillText(`Server CPU Usage: ${cpuUsage.toFixed(2)}%`, 10, 40);
+    ctx.fillText(`Person online: ${personCount}`, 10, 60);
   };
 
   const start = async () => {
@@ -305,6 +312,8 @@ export default function EdgePage() {
     requestId = 0;
     pingCount = 0;
     totalElapsedTime = 0;
+    personCount = 0;
+    cpuUsage = 0;
   };
 
   return (

@@ -163,6 +163,12 @@ export default function EdgePage() {
         totalElapsedTime += elapsed_ms;
         cpuUsage = parseFloat(cpu);
         clientCount = parseInt(client, 10);
+      } else if (evt.data === "timeout") {
+        toast({
+          variant: "destructive",
+          title:
+            "You've reached the maximum connection duration. Connection will close.", // 您已达到最大连接时长，连接即将关闭
+        });
       }
     });
   };
@@ -239,7 +245,7 @@ export default function EdgePage() {
     ctx.drawImage(video, 0, 0, canvasWidth, canvasHeight);
 
     ctx.font = "16px Arial";
-    ctx.fillStyle = "white";
+    ctx.fillStyle = "red";
     ctx.fillText(
       `Average RTT: ${
         pingCount ? (totalElapsedTime / pingCount).toFixed(2) : 0

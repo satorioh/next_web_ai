@@ -314,7 +314,7 @@ export default function EdgePage() {
           ref={videoRef}
         ></video>
       </div>
-      <div className="absolute bottom-6 left-[50%] -translate-x-[50%]">
+      <div className="absolute bottom-8 left-[50%] -translate-x-[50%]">
         <When condition={!isLoading}>
           <Button
             className="w-16 h-16 rounded-[50%]"

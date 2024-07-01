@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 export default function CVLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <div className="flex flex-col p-8 h-[100vh]">
-        <div className="flex-1">{children}</div>
+      <div className="flex flex-col p-4 h-[100vh]">
+        <div className="flex-1 h-full">{children}</div>
       </div>
     </>
   );

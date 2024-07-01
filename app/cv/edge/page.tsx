@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -12,19 +12,21 @@ import { STUN_SERVER, BACKEND_URL_PREFIX } from "@/lib/constants";
 let pc: RTCPeerConnection | null = null;
 let dc: RTCDataChannel | null = null;
 let dcInterval = 0;
-let requestId = 0;
-let pingCount = 0;
-let totalElapsedTime = 0;
-let clientCount = 0;
-let cpuUsage = 0;
 
 export default function EdgePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(10);
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [pingCount, setPingCount] = useState(0);
+  const [totalElapsedTime, setTotalElapsedTime] = useState(0);
+  const [clientCount, setClientCount] = useState(0);
+  const [cpuUsage, setCpuUsage] = useState(0);
   const { toast } = useToast();
+
+  const averageRTT = useMemo(() => {
+    return pingCount ? (totalElapsedTime / pingCount).toFixed(2) : 0;
+  }, [pingCount, totalElapsedTime]);
 
   useEffect(() => {
     if (!pc) {
@@ -159,10 +161,10 @@ export default function EdgePage() {
         const data = evt.data.split(" ");
         const [_, ping, cpu, client] = data;
         const elapsed_ms = performance.now() - parseInt(ping, 10);
-        pingCount++;
-        totalElapsedTime += elapsed_ms;
-        cpuUsage = parseFloat(cpu);
-        clientCount = parseInt(client, 10);
+        setPingCount((prev) => prev + 1);
+        setTotalElapsedTime((prev) => prev + elapsed_ms);
+        setCpuUsage(parseFloat(cpu));
+        setClientCount(parseInt(client, 10));
       } else if (evt.data === "timeout") {
         toast({
           variant: "destructive",
@@ -225,42 +227,9 @@ export default function EdgePage() {
     }
   };
 
-  const detect = async () => {
-    if (videoRef.current === null) return;
-
-    const process = () => {
-      if (videoRef.current && canvasRef.current) {
-        drawFrame(videoRef.current, canvasRef.current);
-      }
-      requestId = window.requestAnimationFrame(process);
-    };
-    process();
-  };
-
-  const drawFrame = (video: HTMLVideoElement, canvas: HTMLCanvasElement) => {
-    const ctx = canvas.getContext("2d");
-    const { width: canvasWidth, height: canvasHeight } = canvas;
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    ctx.drawImage(video, 0, 0, canvasWidth, canvasHeight);
-
-    ctx.font = "16px Arial";
-    ctx.fillStyle = "red";
-    ctx.fillText(
-      `Average RTT: ${
-        pingCount ? (totalElapsedTime / pingCount).toFixed(2) : 0
-      } ms`,
-      10,
-      20,
-    );
-    ctx.fillText(`Server CPU Usage: ${cpuUsage.toFixed(2)}%`, 10, 40);
-    ctx.fillText(`Client online: ${clientCount}`, 10, 60);
-  };
-
   const start = async () => {
     console.log("start");
     await videoRef.current?.play();
-    await detect();
   };
 
   const handleClick = async () => {
@@ -274,7 +243,6 @@ export default function EdgePage() {
 
   const pause = async () => {
     console.log("pause");
-    window.cancelAnimationFrame(requestId);
     videoRef.current?.pause();
   };
 
@@ -315,45 +283,41 @@ export default function EdgePage() {
     pause();
     stopRTC();
     setIsLoading(true);
-    requestId = 0;
-    pingCount = 0;
-    totalElapsedTime = 0;
-    clientCount = 0;
-    cpuUsage = 0;
+    setPingCount(0);
+    setTotalElapsedTime(0);
+    setClientCount(0);
+    setCpuUsage(0);
   };
 
   return (
-    <div className="h-full">
+    <div className="h-full relative">
       <div className="relative">
         <BackBtn />
         <h2 className="text-center scroll-m-20 pb-2 text-2xl font-semibold tracking-tight first:mt-0">
           Edge Detection
         </h2>
       </div>
-      <video
-        controls
-        width={640}
-        height={480}
-        className="hidden"
-        ref={videoRef}
-      ></video>
-      <div className="flex flex-col justify-center items-center relative">
+      <div className="flex flex-col items-center relative h-[calc(100%-40px)]">
         <When condition={isLoading}>
           <div className="absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%]">
             <Progress value={progress} />
             <div>Loading, please wait...</div>
           </div>
         </When>
-        <canvas
-          className="text-center max-w-full mx-auto"
-          width={640}
-          height={480}
-          ref={canvasRef}
-        ></canvas>
+        <p className="w-full flex justify-between">
+          <span>Average RTT: {averageRTT}ms</span>
+          <span>Server CPU Usage: {cpuUsage}%</span>
+          <span>Client online: {clientCount}</span>
+        </p>
+        <video
+          className="w-full h-[calc(100%-40px)] object-cover"
+          ref={videoRef}
+        ></video>
       </div>
-      <div className="text-center space-x-4 mt-4">
+      <div className="absolute bottom-6 left-[50%] -translate-x-[50%]">
         <When condition={!isLoading}>
           <Button
+            className="w-16 h-16 rounded-[50%]"
             onClick={handleClick}
             variant={isPlaying ? "destructive" : "default"}
           >

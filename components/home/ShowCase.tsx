@@ -32,12 +32,12 @@ const card_data = [
     image: "/images/edge.jpeg",
     link: "/cv/edge",
   },
-  // {
-  //   title: "Doctor Stranger's Magic Shield",
-  //   description: "Show magic shield like in the movie",
-  //   image: "/images/shield.png",
-  //   link: "/cv/shield",
-  // },
+  {
+    title: "Doctor Stranger's Magic Shield",
+    description: "Show magic shield like in the movie",
+    image: "/images/shield.png",
+    link: "/cv/shield",
+  },
 ];
 
 export default function ShowCase() {

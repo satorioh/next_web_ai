@@ -219,7 +219,10 @@ export default function EdgePage() {
           await pc.setRemoteDescription(answer);
           setIsLoading(false);
         } catch (e) {
-          tryAgainToast("Service unreachable");
+          console.error(e);
+          tryAgainToast(
+            "High CPU usage on server now. Please try again later.",
+          );
         }
       }
     } catch (e) {

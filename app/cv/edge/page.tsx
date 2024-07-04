@@ -216,13 +216,18 @@ export default function EdgePage() {
           });
 
           const answer = await response.json();
-          await pc.setRemoteDescription(answer);
-          setIsLoading(false);
+          const { sdp, type, errorMsg } = answer;
+          if (sdp) {
+            await pc.setRemoteDescription(answer);
+            setIsLoading(false);
+          } else {
+            toast({
+              variant: "destructive",
+              title: errorMsg,
+            });
+          }
         } catch (e) {
           console.error(e);
-          tryAgainToast(
-            "High CPU usage on server now. Please try again later.",
-          );
         }
       }
     } catch (e) {

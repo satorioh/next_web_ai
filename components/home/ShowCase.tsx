@@ -3,6 +3,18 @@ import CardItem from "@/components/home/CardItem";
 
 const card_data = [
   {
+    title: "Doctor Stranger's Magic Shield",
+    description: "Show magic shield like in the movie",
+    image: "/images/shield.png",
+    link: "/cv/shield",
+  },
+  {
+    title: "Edge Detection",
+    description: "Detect edges via WebRTC.",
+    image: "/images/edge.jpeg",
+    link: "/cv/edge",
+  },
+  {
     title: "Rock, Paper, Scissors",
     description: "Play rock, paper, scissors with webcam.",
     image: "/images/rps.png",
@@ -26,18 +38,6 @@ const card_data = [
     image: "/images/hand.png",
     link: "/cv/hand",
   },
-  {
-    title: "Edge Detection",
-    description: "Detect edges via WebRTC.",
-    image: "/images/edge.jpeg",
-    link: "/cv/edge",
-  },
-  {
-    title: "Doctor Stranger's Magic Shield",
-    description: "Show magic shield like in the movie",
-    image: "/images/shield.png",
-    link: "/cv/shield",
-  },
 ];
 
 export default function ShowCase() {
@@ -45,7 +45,7 @@ export default function ShowCase() {
     <Section>
       <div className="mx-auto max-w-[860px]">
         <h2 className="text-xl md:text-2xl tracking-tight leading-tight mb-2">
-          VISION
+          VISION & AR
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {card_data.map((card, index) => (

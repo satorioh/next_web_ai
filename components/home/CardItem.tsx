@@ -33,7 +33,7 @@ export default function CardItem(props: CardItemProps) {
             ></Image>
           </CardHeader>
           <CardContent>
-            <CardTitle className="text-xl font-normal cursor-pointer">
+            <CardTitle className="text-xl font-normal cursor-pointer truncate">
               {title}
             </CardTitle>
             <CardDescription className="cursor-pointer truncate">

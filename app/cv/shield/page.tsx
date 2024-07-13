@@ -106,6 +106,12 @@ export default function ShieldPage() {
       false,
     );
 
+    // pc.addEventListener("icecandidate", (evt) => {
+    //   if (evt.candidate) {
+    //     console.log("get ice candidate ->", evt.candidate);
+    //   }
+    // });
+
     pc.addEventListener(
       "iceconnectionstatechange",
       () => {

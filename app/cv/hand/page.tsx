@@ -124,13 +124,7 @@ export default function HandPage() {
           canvasRef.current.width,
           canvasRef.current.height,
         );
-        context.drawImage(
-          videoRef.current,
-          0,
-          0,
-          canvasRef.current.width,
-          canvasRef.current.height,
-        );
+        context.drawImage(videoRef.current, 0, 0);
         draw_boxes();
         const input = prepare_input(canvasRef.current);
         if (!isBusy) {
@@ -243,10 +237,7 @@ export default function HandPage() {
             <div>Loading model, please wait...</div>
           </div>
         </When>
-        <canvas
-          className="w-full text-center max-w-3xl"
-          ref={canvasRef}
-        ></canvas>
+        <canvas className="text-center max-w-3xl" ref={canvasRef}></canvas>
       </div>
       <div className="text-center space-x-4 mt-4">
         <When condition={!isLoading}>

@@ -115,6 +115,7 @@ export default function ODPage() {
     canvasRef.current.width = 640;
     canvasRef.current.height = 480;
     const context = canvasRef.current.getContext("2d");
+
     const process = () => {
       console.log("interval");
       if (context && videoRef.current && canvasRef.current) {

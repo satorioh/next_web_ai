@@ -124,7 +124,13 @@ export default function HandPage() {
           canvasRef.current.width,
           canvasRef.current.height,
         );
-        context.drawImage(videoRef.current, 0, 0);
+        context.drawImage(
+          videoRef.current,
+          0,
+          0,
+          canvasRef.current.width,
+          canvasRef.current.height,
+        );
         draw_boxes();
         const input = prepare_input(canvasRef.current);
         if (!isBusy) {

@@ -118,19 +118,7 @@ export default function HandPage() {
     const process = () => {
       console.log("interval");
       if (context && videoRef.current && canvasRef.current) {
-        context.clearRect(
-          0,
-          0,
-          canvasRef.current.width,
-          canvasRef.current.height,
-        );
-        context.drawImage(
-          videoRef.current,
-          0,
-          0,
-          canvasRef.current.width,
-          canvasRef.current.height,
-        );
+        context.drawImage(videoRef.current, 0, 0);
         draw_boxes();
         const input = prepare_input(canvasRef.current);
         if (!isBusy) {

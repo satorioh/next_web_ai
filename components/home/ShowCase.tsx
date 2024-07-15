@@ -3,16 +3,16 @@ import CardItem from "@/components/home/CardItem";
 
 const card_data = [
   {
-    title: "Doctor Stranger's Magic Shield",
-    description: "Show magic shield like in the movie",
-    image: "/images/shield.png",
-    link: "/cv/shield",
-  },
-  {
     title: "Edge Detection",
     description: "Detect edges via WebRTC.",
     image: "/images/edge.jpeg",
     link: "/cv/edge",
+  },
+  {
+    title: "Doctor Stranger's Magic Shield",
+    description: "Show magic shield like in the movie",
+    image: "/images/shield.png",
+    link: "/cv/shield",
   },
   {
     title: "Rock, Paper, Scissors",

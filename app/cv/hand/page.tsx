@@ -231,7 +231,7 @@ export default function HandPage() {
             <div>Loading model, please wait...</div>
           </div>
         </When>
-        <canvas className="w-full text-center max-w-3xl" ref={canvasRef}></canvas>
+        <canvas className="block w-full m-auto text-center max-w-3xl" ref={canvasRef}></canvas>
       </div>
       <div className="text-center space-x-4 mt-4">
         <When condition={!isLoading}>

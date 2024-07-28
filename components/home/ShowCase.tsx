@@ -8,12 +8,12 @@ const card_data = [
     image: "/images/edge.jpeg",
     link: "/cv/edge",
   },
-  {
-    title: "Doctor Stranger's Magic Shield",
-    description: "Show magic shield like in the movie",
-    image: "/images/shield.png",
-    link: "/cv/shield",
-  },
+  // {
+  //   title: "Doctor Stranger's Magic Shield",
+  //   description: "Show magic shield like in the movie",
+  //   image: "/images/shield.png",
+  //   link: "/cv/shield",
+  // },
   {
     title: "Rock, Paper, Scissors",
     description: "Play rock, paper, scissors with webcam.",
@@ -45,7 +45,7 @@ export default function ShowCase() {
     <Section>
       <div className="mx-auto max-w-[860px]">
         <h2 className="text-xl md:text-2xl tracking-tight leading-tight mb-2">
-          VISION & AR
+          VISION
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {card_data.map((card, index) => (
